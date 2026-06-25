@@ -21,17 +21,21 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('pin-error').textContent = 'PIN incorrecto';
     }
   });
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+
+  // Navegación superior
+  document.querySelectorAll('.top-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       switchView(btn.dataset.view);
       currentView = btn.dataset.view;
       navigate(currentView);
     });
   });
+
   document.getElementById('config-btn').addEventListener('click', openConfigModal);
 });
 
 function initApp() { navigate('home'); updateTopBar(); }
+
 export function navigate(view) {
   switch(view) {
     case 'home': renderHome(); break;
@@ -41,12 +45,15 @@ export function navigate(view) {
   }
   updateTopBar();
 }
+
 export function updateTopBar() {
   const basal = calculateBasal();
   const credits = Storage.getCredits();
   document.getElementById('status-dot').className = 'status-dot ' + basal.mode;
   document.getElementById('status-score').textContent = basal.score ?? '--';
-  document.getElementById('status-label').textContent = basal.mode === 'green' ? 'Explotación' : (basal.mode === 'yellow' ? 'Limitado' : 'Protección');
+  // Oculta etiqueta de modo en esta versión (opcional)
   document.getElementById('credits-count').textContent = credits;
-  document.getElementById('nav-emergency').classList.toggle('atenuado', basal.mode !== 'red');
+  // Atenuación de Emergencia si no es rojo
+  const navEm = document.getElementById('nav-emergency');
+  if (navEm) navEm.classList.toggle('atenuado', basal.mode !== 'red');
 }

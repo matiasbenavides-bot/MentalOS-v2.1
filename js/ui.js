@@ -14,7 +14,7 @@ export function showToast(message, duration = 2000) {
   setTimeout(() => toast.classList.add('hidden'), duration);
 }
 export function switchView(view) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.querySelector(`[data-view="${view}"]`);
+  document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.top-nav-btn[data-view="${view}"]`);
   if (btn) btn.classList.add('active');
 }

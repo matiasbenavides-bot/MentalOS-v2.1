@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MentalOS</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="css/style.css?v=final">
+  <link rel="stylesheet" href="css/style.css?v=final2">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -19,28 +19,27 @@
   </div>
 
   <div id="app" class="app-container hidden">
+    <!-- Barra superior fija con navegación -->
     <header class="topbar">
-      <div class="status-badge" id="status-badge">
-        <div class="status-dot" id="status-dot"></div>
-        <div class="status-info">
+      <div class="topbar-row">
+        <div class="status-badge" id="status-badge">
+          <div class="status-dot" id="status-dot"></div>
           <span id="status-score" class="status-score">--</span>
-          <small id="status-label">Cargando...</small>
+        </div>
+        <nav class="top-nav">
+          <button class="top-nav-btn active" data-view="home">Hoy</button>
+          <button class="top-nav-btn" data-view="exploit">Explotar</button>
+          <button class="top-nav-btn" data-view="analysis">Análisis</button>
+          <button class="top-nav-btn" data-view="emergency" id="nav-emergency">Emergencia</button>
+        </nav>
+        <div class="topbar-actions">
+          <span class="credits-badge" id="credits-badge">⚡<span id="credits-count">0</span></span>
+          <button class="icon-btn" id="config-btn" title="Configuración">⚙️</button>
         </div>
       </div>
-      <div class="credits-badge" id="credits-badge">
-        <span>⚡</span><span id="credits-count">0</span>
-      </div>
-      <button class="icon-btn" id="config-btn" title="Configuración">⚙️</button>
     </header>
 
     <main id="viewport" class="viewport"></main>
-
-    <nav class="bottom-nav">
-      <button class="nav-btn active" data-view="home"><span class="nav-icon">🏠</span><span class="nav-label">Hoy</span></button>
-      <button class="nav-btn" data-view="exploit"><span class="nav-icon">⚡</span><span class="nav-label">Explotar</span></button>
-      <button class="nav-btn" data-view="analysis"><span class="nav-icon">📊</span><span class="nav-label">Análisis</span></button>
-      <button class="nav-btn" data-view="emergency" id="nav-emergency"><span class="nav-icon">🛡️</span><span class="nav-label">Emergencia</span></button>
-    </nav>
   </div>
 
   <div id="modal-overlay" class="modal-overlay hidden">
@@ -52,6 +51,6 @@
   </div>
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="js/app.js?v=final"></script>
+  <script type="module" src="js/app.js?v=final2"></script>
 </body>
 </html>

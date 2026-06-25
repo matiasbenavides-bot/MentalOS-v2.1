@@ -10,20 +10,20 @@ export function renderHome() {
   const todayLog = logs[today] || { core: {}, habits: {} };
   const customHabits = Storage.getHabits();
 
-  // Core rápido (chips)
+  // Core rápido
   const coreItems = [
-    { id: 'sleep', name: 'Sueño', icon: '😴', value: todayLog.core.sleep, unit: 'h', format: v => v+'h' },
-    { id: 'nutrition', name: 'Nutrición', icon: '🍽️', value: todayLog.core.nutrition, unit: '', format: v => v?'✓':'✗' },
-    { id: 'movement', name: 'Movimiento', icon: '🚶', value: todayLog.core.movement, unit: '', format: v => v?'✓':'✗' },
-    { id: 'emotional', name: 'Emocional', icon: '🧠', value: todayLog.core.emotional, unit: '/5', format: v => v+'/5' },
-    { id: 'social', name: 'Social', icon: '💬', value: todayLog.core.social, unit: '', format: v => v?'✓':'✗' }
+    { id: 'sleep', name: 'Sueño', icon: '😴', value: todayLog.core.sleep, format: v => v != null ? v + 'h' : '—' },
+    { id: 'nutrition', name: 'Nutrición', icon: '🍽️', value: todayLog.core.nutrition, format: v => v ? '✓' : '✗' },
+    { id: 'movement', name: 'Movimiento', icon: '🚶', value: todayLog.core.movement, format: v => v ? '✓' : '✗' },
+    { id: 'emotional', name: 'Emocional', icon: '🧠', value: todayLog.core.emotional, format: v => v != null ? v + '/5' : '—' },
+    { id: 'social', name: 'Social', icon: '💬', value: todayLog.core.social, format: v => v ? '✓' : '✗' }
   ];
 
   let html = `<div class="core-quick-panel">`;
   coreItems.forEach(item => {
     html += `<button class="core-chip" data-core-id="${item.id}">
       <span class="chip-icon">${item.icon}</span>
-      <span class="chip-value">${item.value !== undefined && item.value !== null ? item.format(item.value) : '—'}</span>
+      <span class="chip-value">${item.format(item.value)}</span>
     </button>`;
   });
   html += `</div>`;
@@ -37,9 +37,9 @@ export function renderHome() {
 
   sections.forEach(sec => {
     const habitsInSection = customHabits.filter(h => h.section === sec.key);
-    html += `<div class="habit-section">
+    html += `<div class="habit-section" data-section="${sec.key}">
       <h3 class="section-title">${sec.title}</h3>
-      <div class="habit-list" data-section="${sec.key}">
+      <div class="habit-list">
         ${habitsInSection.map(h => {
           const completed = todayLog.habits?.[h.id] === true;
           return `<div class="habit-item ${completed ? 'completed' : ''}" data-habit-id="${h.id}">
@@ -47,6 +47,10 @@ export function renderHome() {
             <div class="habit-info">
               <span class="habit-name">${h.icon ? h.icon + ' ' : ''}${h.name}</span>
               <span class="habit-duration">${h.duration ? h.duration + ' min' : ''}</span>
+            </div>
+            <div class="habit-actions">
+              <button class="edit-habit-btn" data-id="${h.id}" title="Editar">✎</button>
+              <button class="delete-habit-btn" data-id="${h.id}" title="Eliminar">🗑</button>
             </div>
           </div>`;
         }).join('')}
@@ -58,7 +62,7 @@ export function renderHome() {
   html += `<button class="btn-primary full-width" id="open-checkin-btn" style="margin-top:0.5rem;">🌙 Cerrar día (Check-in)</button>`;
   vp.innerHTML = html;
 
-  // Eventos Core chips
+  // Eventos Core
   document.querySelectorAll('.core-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const id = chip.dataset.coreId;
@@ -67,15 +71,32 @@ export function renderHome() {
     });
   });
 
-  // Eventos hábitos
+  // Toggle hábito (check)
   document.querySelectorAll('.habit-item').forEach(item => {
     item.addEventListener('click', (e) => {
-      e.stopPropagation();
+      // No activar si se clickeó en los botones de acción
+      if (e.target.closest('.edit-habit-btn') || e.target.closest('.delete-habit-btn')) return;
       toggleCustomHabit(item.dataset.habitId);
     });
   });
 
-  // Agregar hábito a sección
+  // Botones editar
+  document.querySelectorAll('.edit-habit-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEditHabitModal(btn.dataset.id);
+    });
+  });
+
+  // Botones eliminar
+  document.querySelectorAll('.delete-habit-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteHabit(btn.dataset.id);
+    });
+  });
+
+  // Agregar hábito
   document.querySelectorAll('.btn-add-habit').forEach(btn => {
     btn.addEventListener('click', () => openAddHabitModal(btn.dataset.section));
   });
@@ -83,13 +104,7 @@ export function renderHome() {
   document.getElementById('open-checkin-btn').onclick = openCheckinModal;
 }
 
-function formatValue(id, val) {
-  if (val === undefined || val === null) return '—';
-  if (id === 'sleep') return val + 'h';
-  if (id === 'emotional') return val + '/5';
-  return val ? '✓' : '✗';
-}
-
+/* Funciones auxiliares */
 function toggleCoreHabit(id) {
   const today = todayStr();
   const logs = Storage.getLogs();
@@ -160,6 +175,7 @@ function openCheckinModal() {
   document.getElementById('cancel-checkin').onclick = closeModal;
 }
 
+/* --- CRUD Hábitos --- */
 function openAddHabitModal(section) {
   const body = `
     <input type="text" id="new-habit-name" placeholder="Nombre del hábito">
@@ -181,4 +197,40 @@ function openAddHabitModal(section) {
     }
   };
   document.getElementById('cancel-habit-btn').onclick = closeModal;
+}
+
+function openEditHabitModal(habitId) {
+  const habits = Storage.getHabits();
+  const habit = habits.find(h => h.id === habitId);
+  if (!habit) return;
+  const body = `
+    <input type="text" id="edit-habit-name" value="${habit.name}">
+    <input type="text" id="edit-habit-icon" value="${habit.icon || ''}" placeholder="Icono (emoji)" style="margin-top:0.5rem">
+    <div class="form-group" style="margin-top:0.5rem"><label>Duración (minutos)</label><input type="number" id="edit-habit-duration" value="${habit.duration || 15}" min="1"></div>
+    <div class="form-group"><label>Sección</label><select id="edit-habit-section">
+      <option value="morning" ${habit.section === 'morning' ? 'selected' : ''}>Mañana</option>
+      <option value="afternoon" ${habit.section === 'afternoon' ? 'selected' : ''}>Tarde</option>
+      <option value="evening" ${habit.section === 'evening' ? 'selected' : ''}>Noche</option>
+    </select></div>
+  `;
+  const footer = `<button class="btn-primary" id="save-edit-btn">Guardar cambios</button><button class="btn-secondary" id="cancel-edit-btn">Cancelar</button>`;
+  showModal('✎ Editar hábito', body, footer);
+  document.getElementById('save-edit-btn').onclick = () => {
+    habit.name = document.getElementById('edit-habit-name').value.trim();
+    habit.icon = document.getElementById('edit-habit-icon').value || '✅';
+    habit.duration = parseInt(document.getElementById('edit-habit-duration').value) || 15;
+    habit.section = document.getElementById('edit-habit-section').value;
+    Storage.setHabits(habits);
+    closeModal();
+    renderHome();
+  };
+  document.getElementById('cancel-edit-btn').onclick = closeModal;
+}
+
+function deleteHabit(habitId) {
+  if (!confirm('¿Eliminar este hábito?')) return;
+  let habits = Storage.getHabits();
+  habits = habits.filter(h => h.id !== habitId);
+  Storage.setHabits(habits);
+  renderHome();
 }

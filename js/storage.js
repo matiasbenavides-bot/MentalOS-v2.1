@@ -22,7 +22,6 @@ export const Storage = {
   getHabits() {
     let habits = this.get('habits');
     if (!habits || habits.length === 0) {
-      // Hábitos por defecto
       habits = [
         { id: '1', name: 'Estiramientos', icon: '🧘', section: 'morning', duration: 10 },
         { id: '2', name: 'Leer artículos', icon: '📄', section: 'morning', duration: 20 },

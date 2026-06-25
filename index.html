@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MentalOS</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="css/style.css?v=final2">
+  <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div id="pin-screen" class="fullscreen-center">
-    <div class="card pin-card">
+    <div class="pin-card">
       <h1>MentalOS</h1>
       <input type="password" id="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*">
       <button id="pin-btn" class="btn-primary full-width">Entrar</button>
@@ -19,22 +19,21 @@
   </div>
 
   <div id="app" class="app-container hidden">
-    <!-- Barra superior fija con navegación -->
-    <header class="topbar">
+    <header class="topbar" id="topbar">
       <div class="topbar-row">
         <div class="status-badge" id="status-badge">
           <div class="status-dot" id="status-dot"></div>
-          <span id="status-score" class="status-score">--</span>
+          <span id="status-score">--</span>
         </div>
-        <nav class="top-nav">
+        <nav class="top-nav" id="top-nav">
           <button class="top-nav-btn active" data-view="home">Hoy</button>
-          <button class="top-nav-btn" data-view="exploit">Explotar</button>
+          <button class="top-nav-btn" data-view="development">Desarrollo</button>
           <button class="top-nav-btn" data-view="analysis">Análisis</button>
           <button class="top-nav-btn" data-view="emergency" id="nav-emergency">Emergencia</button>
         </nav>
         <div class="topbar-actions">
-          <span class="credits-badge" id="credits-badge">⚡<span id="credits-count">0</span></span>
-          <button class="icon-btn" id="config-btn" title="Configuración">⚙️</button>
+          <span class="credits-badge">⚡<span id="credits-count">0</span></span>
+          <button class="icon-btn" id="config-btn" title="Configuración">⚙</button>
         </div>
       </div>
     </header>
@@ -51,6 +50,6 @@
   </div>
   <div id="toast" class="toast hidden"></div>
 
-  <script type="module" src="js/app.js?v=final2"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -14,8 +14,7 @@ export const Storage = {
     return this.get('config') || {
       pin: '2207',
       emergencyChecklist: ['Ducharse o lavarse la cara','Comer algo','Salir 5 minutos al aire libre','Mensaje a contacto de confianza','Leer 1 página de un libro favorito'],
-      supportMessage: 'Esto es pasajero. Ya saliste de episodios peores.',
-      contactName: 'Contacto de confianza'
+      supportMessage: 'Tu cerebro está experimentando una baja química temporal. Esto va a pasar. Solo cumple estas 5 cosas y tu día habrá sido un éxito.'
     };
   },
   setConfig(c) { this.set('config', c); },
@@ -23,12 +22,11 @@ export const Storage = {
     let habits = this.get('habits');
     if (!habits || habits.length === 0) {
       habits = [
-        { id: '1', name: 'Estiramientos', icon: '🧘', section: 'morning', duration: 10 },
-        { id: '2', name: 'Leer artículos', icon: '📄', section: 'morning', duration: 20 },
-        { id: '3', name: 'Ejercicio', icon: '🏋️', section: 'afternoon', duration: 45 },
-        { id: '4', name: 'Planificar el día', icon: '📅', section: 'morning', duration: 5 },
-        { id: '5', name: 'Meditar', icon: '🧘‍♂️', section: 'evening', duration: 10 },
-        { id: '6', name: 'Escribir diario', icon: '✍️', section: 'evening', duration: 15 }
+        { id: 'h1', name: 'Hidratación y Luz Solar', section: 'morning', duration: 5, order: 0 },
+        { id: 'h2', name: 'Lectura técnica', section: 'morning', duration: 20, order: 1 },
+        { id: 'h3', name: 'Ejercicio', section: 'afternoon', duration: 45, order: 0 },
+        { id: 'h4', name: 'Movilidad', section: 'evening', duration: 10, order: 0 },
+        { id: 'h5', name: 'Planificar día siguiente', section: 'evening', duration: 5, order: 1 }
       ];
       this.set('habits', habits);
     }
@@ -37,23 +35,17 @@ export const Storage = {
   setHabits(h) { this.set('habits', h); },
   getAreas() { return this.get('areas') || []; },
   setAreas(a) { this.set('areas', a); },
-  getExploitationLog() { return this.get('exploit') || []; },
+  getRoutines() { return this.get('routines') || []; },
+  setRoutines(r) { this.set('routines', r); },
+  getExploitLog() { return this.get('exploit') || []; },
   addExploit(session) {
-    const log = this.getExploitationLog();
+    const log = this.getExploitLog();
     log.push(session);
     this.set('exploit', log);
   },
   getCredits() { return this.get('credits') || 0; },
   setCredits(c) { this.set('credits', c); },
   exportAll() {
-    return JSON.stringify({ logs: this.getLogs(), config: this.getConfig(), habits: this.getHabits(), areas: this.getAreas(), exploit: this.getExploitationLog(), credits: this.getCredits() }, null, 2);
-  },
-  importAll(data) {
-    if (data.logs) this.set('logs', data.logs);
-    if (data.config) this.set('config', data.config);
-    if (data.habits) this.set('habits', data.habits);
-    if (data.areas) this.set('areas', data.areas);
-    if (data.exploit) this.set('exploit', data.exploit);
-    if (data.credits !== undefined) this.set('credits', data.credits);
+    return JSON.stringify({ logs: this.getLogs(), config: this.getConfig(), habits: this.getHabits(), areas: this.getAreas(), routines: this.getRoutines(), exploit: this.getExploitLog(), credits: this.getCredits() }, null, 2);
   }
 };

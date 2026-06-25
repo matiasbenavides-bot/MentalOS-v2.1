@@ -2,7 +2,7 @@ import { Storage } from './storage.js';
 import { calculateBasal } from './state.js';
 import { switchView } from './ui.js';
 import { renderHome } from './components/home.js';
-import { renderExploit } from './components/exploit.js';
+import { renderDevelopment } from './components/development.js';
 import { renderAnalysis } from './components/analysis.js';
 import { renderEmergency } from './components/emergency.js';
 import { openConfigModal } from './components/config.js';
@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Navegación superior
   document.querySelectorAll('.top-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       switchView(btn.dataset.view);
@@ -39,7 +38,7 @@ function initApp() { navigate('home'); updateTopBar(); }
 export function navigate(view) {
   switch(view) {
     case 'home': renderHome(); break;
-    case 'exploit': renderExploit(); break;
+    case 'development': renderDevelopment(); break;
     case 'analysis': renderAnalysis(); break;
     case 'emergency': renderEmergency(); break;
   }
@@ -51,9 +50,25 @@ export function updateTopBar() {
   const credits = Storage.getCredits();
   document.getElementById('status-dot').className = 'status-dot ' + basal.mode;
   document.getElementById('status-score').textContent = basal.score ?? '--';
-  // Oculta etiqueta de modo en esta versión (opcional)
   document.getElementById('credits-count').textContent = credits;
-  // Atenuación de Emergencia si no es rojo
-  const navEm = document.getElementById('nav-emergency');
-  if (navEm) navEm.classList.toggle('atenuado', basal.mode !== 'red');
+
+  // Modo Rojo: ocultar pestañas Desarrollo y Análisis
+  const navDev = document.querySelector('.top-nav-btn[data-view="development"]');
+  const navAnalysis = document.querySelector('.top-nav-btn[data-view="analysis"]');
+  const navEmergency = document.getElementById('nav-emergency');
+
+  if (basal.mode === 'red') {
+    if (navDev) navDev.classList.add('hidden');
+    if (navAnalysis) navAnalysis.classList.add('hidden');
+    if (navEmergency) navEmergency.classList.remove('hidden');
+    // Si estaba en Desarrollo o Análisis, forzar vista a home
+    if (currentView === 'development' || currentView === 'analysis') {
+      navigate('home');
+      switchView('home');
+    }
+  } else {
+    if (navDev) navDev.classList.remove('hidden');
+    if (navAnalysis) navAnalysis.classList.remove('hidden');
+  }
+  currentView = document.querySelector('.top-nav-btn.active')?.dataset.view || 'home';
 }

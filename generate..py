@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MentalOS vFinal - Proyecto limpio, sin errores, PIN 2207
+MentalOS vFINAL – Home 100% responsive + hábitos por momento del día + Core rápido
 """
 import os
 
@@ -43,7 +43,9 @@ FILES["index.html"] = '''<!DOCTYPE html>
       </div>
       <button class="icon-btn" id="config-btn" title="Configuración">⚙️</button>
     </header>
+
     <main id="viewport" class="viewport"></main>
+
     <nav class="bottom-nav">
       <button class="nav-btn active" data-view="home"><span class="nav-icon">🏠</span><span class="nav-label">Hoy</span></button>
       <button class="nav-btn" data-view="exploit"><span class="nav-icon">⚡</span><span class="nav-label">Explotar</span></button>
@@ -66,7 +68,7 @@ FILES["index.html"] = '''<!DOCTYPE html>
 </html>'''
 
 # ==================== css/style.css ====================
-FILES["css/style.css"] = '''/* MentalOS - Clean, responsive */
+FILES["css/style.css"] = '''/* MentalOS – Responsive, Core rápido + Hábitos por sección */
 :root {
   --bg: #0f0f0f;
   --surface: #1c1c1c;
@@ -99,48 +101,86 @@ body {
 }
 .text-error { color: var(--red); margin-top: 0.5rem; font-size: 0.85rem; }
 .app-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Topbar */
 .topbar {
-  display: flex; align-items: center; padding: 0.8rem 1.2rem;
-  background: var(--surface); border-bottom: 1px solid var(--border); gap: 1rem;
+  display: flex; align-items: center; padding: 0.7rem 1rem;
+  background: var(--surface); border-bottom: 1px solid var(--border); gap: 0.8rem;
 }
-.status-badge { display: flex; align-items: center; gap: 0.6rem; flex: 1; }
-.status-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--border); }
+.status-badge { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+.status-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--border); }
 .status-dot.green { background: var(--green); }
 .status-dot.yellow { background: var(--yellow); }
 .status-dot.red { background: var(--red); }
-.status-score { font-weight: 700; font-size: 1.2rem; }
-.status-info small { color: var(--text-secondary); font-size: 0.7rem; display: block; }
-.credits-badge { display: flex; align-items: center; gap: 0.3rem; font-weight: 600; background: var(--bg); padding: 0.3rem 0.6rem; border-radius: 20px; }
-.icon-btn { background: none; border: none; color: var(--text); font-size: 1.4rem; padding: 0.3rem; cursor: pointer; border-radius: 8px; }
-.viewport { flex: 1; overflow-y: auto; padding: 1rem; max-width: 650px; margin: 0 auto; width: 100%; }
-.bottom-nav { display: flex; justify-content: space-around; background: var(--surface); border-top: 1px solid var(--border); padding: 0.5rem 0; }
-.nav-btn { display: flex; flex-direction: column; align-items: center; background: none; border: none; color: var(--text-secondary); font-size: 0.65rem; cursor: pointer; }
+.status-score { font-weight: 700; font-size: 1.1rem; }
+.status-info small { color: var(--text-secondary); font-size: 0.65rem; display: block; }
+.credits-badge { display: flex; align-items: center; gap: 0.25rem; font-weight: 600; background: var(--bg); padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.9rem; }
+.icon-btn { background: none; border: none; color: var(--text); font-size: 1.3rem; padding: 0.25rem; cursor: pointer; }
+
+/* Viewport */
+.viewport { flex: 1; overflow-y: auto; padding: 0.8rem; max-width: 600px; margin: 0 auto; width: 100%; }
+
+/* Bottom nav */
+.bottom-nav { display: flex; justify-content: space-around; background: var(--surface); border-top: 1px solid var(--border); padding: 0.4rem 0; }
+.nav-btn { display: flex; flex-direction: column; align-items: center; background: none; border: none; color: var(--text-secondary); font-size: 0.6rem; cursor: pointer; }
 .nav-btn.active { color: var(--accent); }
-.nav-btn .nav-icon { font-size: 1.4rem; }
+.nav-btn .nav-icon { font-size: 1.3rem; }
 .nav-btn.atenuado { opacity: 0.3; pointer-events: none; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
-.habit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.8rem; margin-bottom: 1.2rem; }
-.habit-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 1rem 0.6rem; text-align: center; cursor: pointer; transition: all 0.15s;
+
+/* Core rápido (chips) */
+.core-quick-panel {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem;
 }
-.habit-card:active { transform: scale(0.96); }
-.habit-card.completed { border-color: var(--green); background: var(--green-bg); }
-.habit-card.failed { border-color: var(--red); background: var(--red-bg); opacity: 0.6; }
-.habit-card.core { border-style: dashed; border-width: 2px; }
-.habit-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
-.habit-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.2rem; }
-.habit-value { font-size: 0.75rem; color: var(--text-secondary); }
-.weekly-dots { display: flex; gap: 3px; justify-content: center; margin-top: 0.5rem; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
-.dot.done { background: var(--green); }
-.dot.missed { background: var(--red); }
+.core-chip {
+  display: flex; align-items: center; gap: 0.25rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 0.35rem 0.7rem; cursor: pointer;
+  font-size: 0.8rem; transition: background 0.2s;
+}
+.core-chip:active { background: var(--surface-hover); }
+.chip-icon { font-size: 1rem; }
+.chip-value { font-weight: 500; }
+
+/* Secciones de hábitos */
+.habit-section { margin-bottom: 1rem; }
+.section-title { font-size: 0.95rem; margin-bottom: 0.4rem; font-weight: 600; }
+.habit-list { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.habit-item {
+  display: flex; align-items: center; gap: 0.6rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0.6rem 0.8rem; cursor: pointer;
+}
+.habit-item:active { background: var(--surface-hover); }
+.habit-checkbox {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: white; flex-shrink: 0;
+}
+.habit-item.completed .habit-checkbox {
+  background: var(--green); border-color: var(--green);
+}
+.habit-item.completed .habit-checkbox::after { content: '✓'; }
+.habit-info { flex: 1; display: flex; justify-content: space-between; align-items: center; }
+.habit-name { font-size: 0.85rem; }
+.habit-duration { font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.5rem; }
+
+.btn-add-habit {
+  background: none; border: 1px dashed var(--border); color: var(--text-secondary);
+  padding: 0.5rem; border-radius: var(--radius); cursor: pointer;
+  text-align: center; font-size: 0.8rem; margin-top: 0.2rem;
+}
+
+/* Botones */
 .btn-primary {
   display: inline-block; background: var(--accent); color: white; border: none;
   padding: 0.7rem 1.2rem; border-radius: var(--radius); font-weight: 600; cursor: pointer;
 }
 .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 0.6rem 1rem; border-radius: var(--radius); cursor: pointer; }
 .full-width { width: 100%; display: block; }
+
+/* Modal */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500;
   display: flex; align-items: flex-end; justify-content: center;
@@ -155,13 +195,16 @@ body {
 .modal-close { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
 .modal-body { margin-bottom: 1rem; }
 .modal-footer { display: flex; gap: 0.5rem; justify-content: flex-end; }
-.form-group { margin-bottom: 1.2rem; }
-.form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; }
 input, select, textarea {
-  width: 100%; padding: 0.7rem; background: var(--bg); border: 1px solid var(--border);
-  color: var(--text); border-radius: 8px; font-size: 0.95rem; font-family: inherit;
+  width: 100%; padding: 0.65rem; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); border-radius: 8px; font-size: 0.9rem; font-family: inherit;
 }
 textarea { resize: vertical; min-height: 80px; }
+
+/* Otras secciones (sin cambios) */
 .chart-container { background: var(--surface); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
 .checklist-item {
   display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem;
@@ -203,7 +246,22 @@ export const Storage = {
     };
   },
   setConfig(c) { this.set('config', c); },
-  getHabits() { return this.get('habits') || []; },
+  getHabits() {
+    let habits = this.get('habits');
+    if (!habits || habits.length === 0) {
+      // Hábitos por defecto
+      habits = [
+        { id: '1', name: 'Estiramientos', icon: '🧘', section: 'morning', duration: 10 },
+        { id: '2', name: 'Leer artículos', icon: '📄', section: 'morning', duration: 20 },
+        { id: '3', name: 'Ejercicio', icon: '🏋️', section: 'afternoon', duration: 45 },
+        { id: '4', name: 'Planificar el día', icon: '📅', section: 'morning', duration: 5 },
+        { id: '5', name: 'Meditar', icon: '🧘‍♂️', section: 'evening', duration: 10 },
+        { id: '6', name: 'Escribir diario', icon: '✍️', section: 'evening', duration: 15 }
+      ];
+      this.set('habits', habits);
+    }
+    return habits;
+  },
   setHabits(h) { this.set('habits', h); },
   getAreas() { return this.get('areas') || []; },
   setAreas(a) { this.set('areas', a); },
@@ -306,49 +364,78 @@ export function renderHome() {
   const logs = Storage.getLogs();
   const todayLog = logs[today] || { core: {}, habits: {} };
   const customHabits = Storage.getHabits();
-  const allHabits = [
-    { id: 'sleep', name: 'Sueño', icon: '😴', core: true, val: todayLog.core.sleep },
-    { id: 'nutrition', name: 'Nutrición', icon: '🍽️', core: true, val: todayLog.core.nutrition },
-    { id: 'movement', name: 'Movimiento', icon: '🚶', core: true, val: todayLog.core.movement },
-    { id: 'emotional', name: 'Emocional', icon: '🧠', core: true, val: todayLog.core.emotional },
-    { id: 'social', name: 'Social', icon: '💬', core: true, val: todayLog.core.social },
-    ...customHabits.map(h => ({ id: h.id, name: h.name, icon: h.icon||'✅', core: false, val: todayLog.habits?.[h.id] }))
-  ];
-  vp.innerHTML = `
-    <div class="habit-grid" id="habit-grid"></div>
-    <button class="btn-primary full-width" id="open-checkin-btn">🌙 Cerrar día (Check-in)</button>
-    <button class="btn-secondary full-width" style="margin-top:0.5rem" id="add-habit-btn">+ Agregar hábito</button>
-  `;
-  renderHabitCards(allHabits, logs);
-  document.getElementById('open-checkin-btn').onclick = openCheckinModal;
-  document.getElementById('add-habit-btn').onclick = openAddHabitModal;
-}
 
-function renderHabitCards(habits, logs) {
-  const grid = document.getElementById('habit-grid');
-  grid.innerHTML = habits.map(h => {
-    const completed = h.core ? (h.val !== undefined && h.val !== false && h.val !== null) : (h.val === true);
-    const cls = ['habit-card'];
-    if (h.core) cls.push('core');
-    if (completed) cls.push('completed');
-    return `
-      <div class="${cls.join(' ')}" data-id="${h.id}" data-core="${h.core}">
-        <div class="habit-icon">${h.icon}</div>
-        <div class="habit-name">${h.name}</div>
-        <div class="habit-value">${formatValue(h.id, h.val)}</div>
-        <div class="weekly-dots">${renderDots(h.id, logs)}</div>
+  // Core rápido (chips)
+  const coreItems = [
+    { id: 'sleep', name: 'Sueño', icon: '😴', value: todayLog.core.sleep, unit: 'h', format: v => v+'h' },
+    { id: 'nutrition', name: 'Nutrición', icon: '🍽️', value: todayLog.core.nutrition, unit: '', format: v => v?'✓':'✗' },
+    { id: 'movement', name: 'Movimiento', icon: '🚶', value: todayLog.core.movement, unit: '', format: v => v?'✓':'✗' },
+    { id: 'emotional', name: 'Emocional', icon: '🧠', value: todayLog.core.emotional, unit: '/5', format: v => v+'/5' },
+    { id: 'social', name: 'Social', icon: '💬', value: todayLog.core.social, unit: '', format: v => v?'✓':'✗' }
+  ];
+
+  let html = `<div class="core-quick-panel">`;
+  coreItems.forEach(item => {
+    html += `<button class="core-chip" data-core-id="${item.id}">
+      <span class="chip-icon">${item.icon}</span>
+      <span class="chip-value">${item.value !== undefined && item.value !== null ? item.format(item.value) : '—'}</span>
+    </button>`;
+  });
+  html += `</div>`;
+
+  // Secciones de hábitos
+  const sections = [
+    { key: 'morning', title: '🌅 Mañana' },
+    { key: 'afternoon', title: '☀️ Tarde' },
+    { key: 'evening', title: '🌙 Noche' }
+  ];
+
+  sections.forEach(sec => {
+    const habitsInSection = customHabits.filter(h => h.section === sec.key);
+    html += `<div class="habit-section">
+      <h3 class="section-title">${sec.title}</h3>
+      <div class="habit-list" data-section="${sec.key}">
+        ${habitsInSection.map(h => {
+          const completed = todayLog.habits?.[h.id] === true;
+          return `<div class="habit-item ${completed ? 'completed' : ''}" data-habit-id="${h.id}">
+            <div class="habit-checkbox"></div>
+            <div class="habit-info">
+              <span class="habit-name">${h.icon ? h.icon + ' ' : ''}${h.name}</span>
+              <span class="habit-duration">${h.duration ? h.duration + ' min' : ''}</span>
+            </div>
+          </div>`;
+        }).join('')}
+        <button class="btn-add-habit" data-section="${sec.key}">+ Agregar hábito</button>
       </div>
-    `;
-  }).join('');
-  grid.querySelectorAll('.habit-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const id = card.dataset.id;
-      const core = card.dataset.core === 'true';
-      if (core && (id === 'sleep' || id === 'emotional')) showCoreInputModal(id);
-      else if (core) toggleCoreHabit(id);
-      else toggleCustomHabit(id);
+    </div>`;
+  });
+
+  html += `<button class="btn-primary full-width" id="open-checkin-btn" style="margin-top:0.5rem;">🌙 Cerrar día (Check-in)</button>`;
+  vp.innerHTML = html;
+
+  // Eventos Core chips
+  document.querySelectorAll('.core-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const id = chip.dataset.coreId;
+      if (id === 'sleep' || id === 'emotional') showCoreInputModal(id);
+      else toggleCoreHabit(id);
     });
   });
+
+  // Eventos hábitos
+  document.querySelectorAll('.habit-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleCustomHabit(item.dataset.habitId);
+    });
+  });
+
+  // Agregar hábito a sección
+  document.querySelectorAll('.btn-add-habit').forEach(btn => {
+    btn.addEventListener('click', () => openAddHabitModal(btn.dataset.section));
+  });
+
+  document.getElementById('open-checkin-btn').onclick = openCheckinModal;
 }
 
 function formatValue(id, val) {
@@ -356,24 +443,6 @@ function formatValue(id, val) {
   if (id === 'sleep') return val + 'h';
   if (id === 'emotional') return val + '/5';
   return val ? '✓' : '✗';
-}
-
-function renderDots(habitId, logs) {
-  let html = '';
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const ds = d.toISOString().split('T')[0];
-    const log = logs[ds];
-    let done = false;
-    if (log) {
-      if (habitId === 'sleep') done = log.core.sleep >= 6.5;
-      else if (habitId === 'emotional') done = log.core.emotional >= 3;
-      else if (['nutrition','movement','social'].includes(habitId)) done = log.core[habitId] === true;
-      else done = log.habits?.[habitId] === true;
-    }
-    html += `<span class="dot ${done ? 'done' : (log ? 'missed' : '')}"></span>`;
-  }
-  return html;
 }
 
 function toggleCoreHabit(id) {
@@ -385,12 +454,12 @@ function toggleCoreHabit(id) {
   renderHome();
 }
 
-function toggleCustomHabit(id) {
+function toggleCustomHabit(habitId) {
   const today = todayStr();
   const logs = Storage.getLogs();
   const log = logs[today] || { core: {}, habits: {} };
   if (!log.habits) log.habits = {};
-  log.habits[id] = !log.habits[id];
+  log.habits[habitId] = !log.habits[habitId];
   Storage.addLog(today, log);
   renderHome();
 }
@@ -446,14 +515,25 @@ function openCheckinModal() {
   document.getElementById('cancel-checkin').onclick = closeModal;
 }
 
-function openAddHabitModal() {
-  const body = `<input type="text" id="new-habit-name" placeholder="Nombre del hábito"><input type="text" id="new-habit-icon" placeholder="Icono (emoji)" style="margin-top:0.5rem">`;
+function openAddHabitModal(section) {
+  const body = `
+    <input type="text" id="new-habit-name" placeholder="Nombre del hábito">
+    <input type="text" id="new-habit-icon" placeholder="Icono (emoji)" style="margin-top:0.5rem">
+    <div class="form-group" style="margin-top:0.5rem"><label>Duración (minutos)</label><input type="number" id="new-habit-duration" min="1" value="15"></div>
+  `;
   const footer = `<button class="btn-primary" id="save-habit-btn">Guardar</button><button class="btn-secondary" id="cancel-habit-btn">Cancelar</button>`;
   showModal('➕ Nuevo hábito', body, footer);
   document.getElementById('save-habit-btn').onclick = () => {
     const name = document.getElementById('new-habit-name').value.trim();
     const icon = document.getElementById('new-habit-icon').value || '✅';
-    if (name) { const habits = Storage.getHabits(); habits.push({ id: Date.now().toString(), name, icon }); Storage.setHabits(habits); closeModal(); renderHome(); }
+    const duration = parseInt(document.getElementById('new-habit-duration').value) || 15;
+    if (name) {
+      const habits = Storage.getHabits();
+      habits.push({ id: Date.now().toString(), name, icon, section, duration });
+      Storage.setHabits(habits);
+      closeModal();
+      renderHome();
+    }
   };
   document.getElementById('cancel-habit-btn').onclick = closeModal;
 }
@@ -696,7 +776,7 @@ def create_project():
         with open(full, 'w', encoding='utf-8') as f:
             f.write(content)
         print(f"  ✓ {path}")
-    print(f"\n✅ Proyecto limpio generado en '{BASE_DIR}/'")
+    print(f"\n✅ MentalOS con Home responsiva y hábitos por momento generado.")
     print("PIN por defecto: 2207")
 
 if __name__ == '__main__':

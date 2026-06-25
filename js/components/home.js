@@ -1,5 +1,5 @@
 import { Storage } from '../storage.js';
-import { todayStr, calculateBasal, updateCreditsOnCheckin } from '../state.js';
+import { todayStr, updateCreditsOnCheckin } from '../state.js';
 import { showModal, closeModal, showToast } from '../ui.js';
 import { updateTopBar } from '../app.js';
 
@@ -17,7 +17,6 @@ export function renderHome() {
     { id: 'social', name: 'Social', icon: '💬', core: true, val: todayLog.core.social },
     ...customHabits.map(h => ({ id: h.id, name: h.name, icon: h.icon||'✅', core: false, val: todayLog.habits?.[h.id] }))
   ];
-
   vp.innerHTML = `
     <div class="habit-grid" id="habit-grid"></div>
     <button class="btn-primary full-width" id="open-checkin-btn">🌙 Cerrar día (Check-in)</button>
@@ -44,20 +43,13 @@ function renderHabitCards(habits, logs) {
       </div>
     `;
   }).join('');
-
   grid.querySelectorAll('.habit-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = card.dataset.id;
       const core = card.dataset.core === 'true';
-      if (core) {
-        if (id === 'sleep' || id === 'emotional') {
-          showCoreInputModal(id, card.dataset.core === 'true');
-        } else {
-          toggleCoreHabit(id);
-        }
-      } else {
-        toggleCustomHabit(id);
-      }
+      if (core && (id === 'sleep' || id === 'emotional')) showCoreInputModal(id);
+      else if (core) toggleCoreHabit(id);
+      else toggleCustomHabit(id);
     });
   });
 }
@@ -106,7 +98,7 @@ function toggleCustomHabit(id) {
   renderHome();
 }
 
-function showCoreInputModal(id, core) {
+function showCoreInputModal(id) {
   const today = todayStr();
   const logs = Storage.getLogs();
   const log = logs[today] || { core: {}, habits: {} };
@@ -117,12 +109,7 @@ function showCoreInputModal(id, core) {
   showModal(title, body, footer);
   document.getElementById('save-core-btn').onclick = () => {
     const val = parseFloat(document.getElementById('core-input').value);
-    if (!isNaN(val)) {
-      log.core[id] = val;
-      Storage.addLog(today, log);
-      closeModal();
-      renderHome();
-    }
+    if (!isNaN(val)) { log.core[id] = val; Storage.addLog(today, log); closeModal(); renderHome(); }
   };
   document.getElementById('cancel-core-btn').onclick = closeModal;
 }
@@ -131,15 +118,12 @@ function openCheckinModal() {
   const today = todayStr();
   const logs = Storage.getLogs();
   const log = logs[today] || { core: {}, habits: {} };
-  let body = `
+  const body = `
     <div class="form-group"><label>😴 Horas de sueño</label><input type="number" id="ci-sleep" value="${log.core.sleep||''}" min="0" max="24" step="0.5"></div>
-    <div class="form-group"><label>🍽️ ¿Comiste al menos 3 veces?</label>
-      <select id="ci-nutrition"><option value="">—</option><option value="1" ${log.core.nutrition?'selected':''}>Sí</option><option value="0" ${log.core.nutrition===false?'selected':''}>No</option></select></div>
-    <div class="form-group"><label>🚶 ¿Te moviste al menos 30 min?</label>
-      <select id="ci-movement"><option value="">—</option><option value="1" ${log.core.movement?'selected':''}>Sí</option><option value="0" ${log.core.movement===false?'selected':''}>No</option></select></div>
+    <div class="form-group"><label>🍽️ ¿Comiste al menos 3 veces?</label><select id="ci-nutrition"><option value="">—</option><option value="1" ${log.core.nutrition?'selected':''}>Sí</option><option value="0" ${log.core.nutrition===false?'selected':''}>No</option></select></div>
+    <div class="form-group"><label>🚶 ¿Te moviste al menos 30 min?</label><select id="ci-movement"><option value="">—</option><option value="1" ${log.core.movement?'selected':''}>Sí</option><option value="0" ${log.core.movement===false?'selected':''}>No</option></select></div>
     <div class="form-group"><label>🧠 Estado emocional (1-5)</label><input type="number" id="ci-emotional" value="${log.core.emotional||''}" min="1" max="5"></div>
-    <div class="form-group"><label>💬 ¿Interacción social hoy?</label>
-      <select id="ci-social"><option value="">—</option><option value="1" ${log.core.social?'selected':''}>Sí</option><option value="0" ${log.core.social===false?'selected':''}>No</option></select></div>
+    <div class="form-group"><label>💬 ¿Interacción social hoy?</label><select id="ci-social"><option value="">—</option><option value="1" ${log.core.social?'selected':''}>Sí</option><option value="0" ${log.core.social===false?'selected':''}>No</option></select></div>
     <div class="form-group"><label>📝 Notas del día</label><textarea id="ci-notes">${log.notes||''}</textarea></div>
   `;
   const footer = `<button class="btn-primary" id="save-checkin">Guardar</button><button class="btn-secondary" id="cancel-checkin">Cancelar</button>`;
@@ -152,9 +136,8 @@ function openCheckinModal() {
       emotional: parseInt(document.getElementById('ci-emotional').value) || null,
       social: document.getElementById('ci-social').value === '1' ? true : (document.getElementById('ci-social').value === '0' ? false : null)
     };
-    const notes = document.getElementById('ci-notes').value;
     log.core = core;
-    log.notes = notes;
+    log.notes = document.getElementById('ci-notes').value;
     Storage.addLog(today, log);
     const allOk = core.sleep>0 && core.nutrition===true && core.movement===true && core.emotional>=1 && core.social===true;
     updateCreditsOnCheckin(today, allOk);
@@ -173,14 +156,7 @@ function openAddHabitModal() {
   document.getElementById('save-habit-btn').onclick = () => {
     const name = document.getElementById('new-habit-name').value.trim();
     const icon = document.getElementById('new-habit-icon').value || '✅';
-    if (name) {
-      const habits = Storage.getHabits();
-      habits.push({ id: Date.now().toString(), name, icon });
-      Storage.setHabits(habits);
-      closeModal();
-      renderHome();
-      showToast('Hábito agregado');
-    }
+    if (name) { const habits = Storage.getHabits(); habits.push({ id: Date.now().toString(), name, icon }); Storage.setHabits(habits); closeModal(); renderHome(); }
   };
   document.getElementById('cancel-habit-btn').onclick = closeModal;
 }

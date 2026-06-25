@@ -1,5 +1,5 @@
 import { Storage } from './storage.js';
-import { todayStr, calculateBasal, getCredits } from './state.js';
+import { calculateBasal, getCredits } from './state.js';
 import { switchView } from './ui.js';
 import { renderHome } from './components/home.js';
 import { renderExploit } from './components/exploit.js';
@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('pin-error').textContent = 'PIN incorrecto';
     }
   });
-
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       switchView(btn.dataset.view);
@@ -29,15 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
       navigate(currentView);
     });
   });
-
   document.getElementById('config-btn').addEventListener('click', openConfigModal);
 });
 
-function initApp() {
-  navigate('home');
-  updateTopBar();
-}
-
+function initApp() { navigate('home'); updateTopBar(); }
 export function navigate(view) {
   switch(view) {
     case 'home': renderHome(); break;
@@ -47,17 +41,12 @@ export function navigate(view) {
   }
   updateTopBar();
 }
-
 export function updateTopBar() {
   const basal = calculateBasal();
   const credits = getCredits();
-  const dot = document.getElementById('status-dot');
-  dot.className = 'status-dot ' + basal.mode;
-  document.getElementById('status-score').textContent = basal.score !== null ? basal.score : '--';
-  const label = basal.mode === 'green' ? 'Explotación disponible' : (basal.mode === 'yellow' ? 'Limitado' : 'Protección');
-  document.getElementById('status-label').textContent = label;
+  document.getElementById('status-dot').className = 'status-dot ' + basal.mode;
+  document.getElementById('status-score').textContent = basal.score ?? '--';
+  document.getElementById('status-label').textContent = basal.mode === 'green' ? 'Explotación' : (basal.mode === 'yellow' ? 'Limitado' : 'Protección');
   document.getElementById('credits-count').textContent = credits;
-  const navEm = document.getElementById('nav-emergency');
-  if (basal.mode === 'red') navEm.classList.remove('atenuado');
-  else navEm.classList.add('atenuado');
+  document.getElementById('nav-emergency').classList.toggle('atenuado', basal.mode !== 'red');
 }

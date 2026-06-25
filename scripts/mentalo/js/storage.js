@@ -1,12 +1,9 @@
 const PREFIX = 'mentalo_';
 export const Storage = {
   get(key) {
-    try { const raw = localStorage.getItem(PREFIX + key); return raw ? JSON.parse(raw) : null; }
-    catch { return null; }
+    try { return JSON.parse(localStorage.getItem(PREFIX + key)); } catch { return null; }
   },
-  set(key, value) {
-    localStorage.setItem(PREFIX + key, JSON.stringify(value));
-  },
+  set(key, value) { localStorage.setItem(PREFIX + key, JSON.stringify(value)); },
   getLogs() { return this.get('logs') || {}; },
   addLog(date, data) {
     const logs = this.getLogs();
@@ -15,7 +12,7 @@ export const Storage = {
   },
   getConfig() {
     return this.get('config') || {
-      pin: '1234',
+      pin: '2207',
       emergencyChecklist: ['Ducharse o lavarse la cara','Comer algo','Salir 5 minutos al aire libre','Mensaje a contacto de confianza','Leer 1 página de un libro favorito'],
       supportMessage: 'Esto es pasajero. Ya saliste de episodios peores.',
       contactName: 'Contacto de confianza'

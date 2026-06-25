@@ -1,4 +1,4 @@
-import { Storage } from './storage.js';
+﻿import { Storage } from './storage.js';
 import { calculateBasal } from './state.js';
 import { switchView } from './ui.js';
 import { renderHome } from './components/home.js';
@@ -52,7 +52,6 @@ export function updateTopBar() {
   document.getElementById('status-score').textContent = basal.score ?? '--';
   document.getElementById('credits-count').textContent = credits;
 
-  // Modo Rojo: ocultar pestañas Desarrollo y Análisis
   const navDev = document.querySelector('.top-nav-btn[data-view="development"]');
   const navAnalysis = document.querySelector('.top-nav-btn[data-view="analysis"]');
   const navEmergency = document.getElementById('nav-emergency');
@@ -61,7 +60,6 @@ export function updateTopBar() {
     if (navDev) navDev.classList.add('hidden');
     if (navAnalysis) navAnalysis.classList.add('hidden');
     if (navEmergency) navEmergency.classList.remove('hidden');
-    // Si estaba en Desarrollo o Análisis, forzar vista a home
     if (currentView === 'development' || currentView === 'analysis') {
       navigate('home');
       switchView('home');

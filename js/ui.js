@@ -1,4 +1,4 @@
-﻿export function showModal(title, bodyHtml, footerHtml = '') {
+export function showModal(title, bodyHtml, footerHtml = '') {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').innerHTML = bodyHtml;
   document.getElementById('modal-footer').innerHTML = footerHtml;

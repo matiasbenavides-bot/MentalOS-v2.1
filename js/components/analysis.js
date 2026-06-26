@@ -1,10 +1,9 @@
-﻿import { Storage } from '../storage.js';
+import { Storage } from '../storage.js';
 import { calculateBasal } from '../state.js';
 let chart;
 export function renderAnalysis() {
   const logs = Storage.getLogs();
   const exploitLog = Storage.getExploitLog();
-  // Contadores acumulativos
   const studyAreas = Storage.getAreas().filter(a => a.type === 'study');
   const trainingAreas = Storage.getAreas().filter(a => a.type === 'training');
   const totalStudyHours = Math.round(exploitLog.filter(e => studyAreas.some(a => a.id === e.areaId)).reduce((s,e) => s + e.duration, 0) / 60);
@@ -44,7 +43,7 @@ function loadChart(months) {
   const scores = dates.map(d => calculateBasal(d).score);
   const labels = dates.map(d => d.slice(5));
   if (chart) chart.destroy();
-  // Suavizado con media mÃ³vil de 7 dÃ­as
+  // Suavizado con media móvil de 7 días
   const smoothed = [];
   for (let i = 0; i < scores.length; i++) {
     let count = 0, sum = 0;

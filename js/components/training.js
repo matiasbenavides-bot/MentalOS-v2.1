@@ -1,4 +1,4 @@
-﻿import { Storage } from '../storage.js';
+import { Storage } from '../storage.js';
 import { todayStr, calculateBasal, spendCredit } from '../state.js';
 import { showModal, closeModal, showToast } from '../ui.js';
 
@@ -59,11 +59,10 @@ function addExercise(routine) {
 
 function startRoutine(routine) {
   const basal = calculateBasal();
-  if (basal.mode === 'red') { showToast('No disponible en ProtecciÃ³n'); return; }
-  if (Storage.getCredits() === 0) { showToast('NecesitÃ¡s 1 crÃ©dito'); return; }
-  if (!confirm('Gastar 1 crÃ©dito para iniciar rutina?')) return;
+  if (basal.mode === 'red') { showToast('No disponible en Protección'); return; }
+  if (Storage.getCredits() === 0) { showToast('Necesitás 1 crédito'); return; }
+  if (!confirm('Gastar 1 crédito para iniciar rutina?')) return;
   spendCredit();
-  // Renderizar vista de ejecuciÃ³n
   const detailDiv = document.getElementById('routine-detail');
   let html = `<h4>${routine.name} - En progreso</h4>`;
   routine.exercises.forEach((ex, i) => {
@@ -86,7 +85,7 @@ function startRoutine(routine) {
     }
   };
   document.getElementById('finish-routine').addEventListener('click', () => {
-    const notes = prompt('Notas de la sesiÃ³n:');
+    const notes = prompt('Notas de la sesión:');
     Storage.addExploit({ areaId: routine.id, date: todayStr(), duration: 0, intensity: parseInt(prompt('Intensidad (1-10):','7'))||7, notes });
     showToast('Rutina completada');
     renderTraining(document.getElementById('dev-content'));

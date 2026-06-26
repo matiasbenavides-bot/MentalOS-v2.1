@@ -1,4 +1,4 @@
-﻿import { Storage } from '../storage.js';
+import { Storage } from '../storage.js';
 import { todayStr } from '../state.js';
 export function renderEmergency() {
   const config = Storage.getConfig();
@@ -8,7 +8,7 @@ export function renderEmergency() {
   const completed = log.checklist || [];
   document.getElementById('viewport').innerHTML = `
     <h3>Protocolo de Emergencia</h3>
-    <p style="color:var(--text-secondary);">CompletÃ¡ lo que puedas.</p>
+    <p style="color:var(--text-secondary);">Completá lo que puedas.</p>
     <div id="checklist-container">${checklist.map((item, idx) => `
       <div class="checklist-item ${completed.includes(idx)?'completed':''}" data-index="${idx}">
         <input type="checkbox" id="ec-${idx}" ${completed.includes(idx)?'checked':''}>

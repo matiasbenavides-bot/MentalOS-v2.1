@@ -1,4 +1,4 @@
-﻿import { renderStudies } from './studies.js';
+import { renderStudies } from './studies.js';
 import { renderTraining } from './training.js';
 
 export function renderDevelopment() {

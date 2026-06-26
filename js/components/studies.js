@@ -1,4 +1,4 @@
-﻿import { Storage } from '../storage.js';
+import { Storage } from '../storage.js';
 import { todayStr, calculateBasal, spendCredit } from '../state.js';
 import { showModal, closeModal, showToast } from '../ui.js';
 
@@ -8,9 +8,9 @@ let timerInterval = null;
 export function renderStudies(container) {
   const areas = Storage.getAreas().filter(a => a.type === 'study');
   container.innerHTML = `
-    <h3>Ãreas de estudio</h3>
-    <div id="areas-list">${areas.map(a => `<div class="card" style="margin:0.5rem 0; cursor:pointer" data-area-id="${a.id}"><strong>${a.name}</strong><div style="font-size:0.7rem; color:var(--text-secondary);">${a.documents?.length||0} docs Â· ${a.videos?.length||0} videos</div></div>`).join('')}</div>
-    <button class="btn-secondary full-width" id="btn-add-area">+ Nueva Ã¡rea</button>
+    <h3>Áreas de estudio</h3>
+    <div id="areas-list">${areas.map(a => `<div class="card" style="margin:0.5rem 0; cursor:pointer" data-area-id="${a.id}"><strong>${a.name}</strong><div style="font-size:0.7rem; color:var(--text-secondary);">${a.documents?.length||0} docs · ${a.videos?.length||0} videos</div></div>`).join('')}</div>
+    <button class="btn-secondary full-width" id="btn-add-area">+ Nueva área</button>
     <div id="area-detail" style="margin-top:1rem;"></div>
   `;
 
@@ -18,7 +18,7 @@ export function renderStudies(container) {
     card.addEventListener('click', () => showAreaDetail(card.dataset.areaId));
   });
   document.getElementById('btn-add-area').addEventListener('click', () => {
-    const name = prompt('Nombre del Ã¡rea de estudio:');
+    const name = prompt('Nombre del área de estudio:');
     if (name) {
       const areas = Storage.getAreas();
       areas.push({ id: Date.now().toString(), name, type: 'study', documents: [], videos: [], supportText: '' });
@@ -60,10 +60,10 @@ function loadTabContent(tabName, area) {
   switch(tabName) {
     case 'focus':
       contentDiv.innerHTML = `
-        <p>MÃ©todo de temporizaciÃ³n:</p>
+        <p>Método de temporización:</p>
         <select id="timer-method"><option value="pomodoro">Pomodoro (25/5)</option><option value="flow">Ultradiano (50-90)</option></select>
         <input type="text" id="focus-goal" placeholder="Entregable concreto de hoy" style="margin-top:0.5rem">
-        <button class="btn-primary full-width" id="start-session-btn">Iniciar SesiÃ³n</button>
+        <button class="btn-primary full-width" id="start-session-btn">Iniciar Sesión</button>
         <div id="timer-display" class="timer-display hidden"></div>
         <button class="btn-secondary full-width hidden" id="stop-timer-btn">Finalizar</button>
       `;
@@ -75,7 +75,7 @@ function loadTabContent(tabName, area) {
         <button class="btn-secondary full-width" id="add-doc-btn">+ Agregar documento</button>
       `;
       document.getElementById('add-doc-btn').addEventListener('click', () => {
-        const title = prompt('TÃ­tulo del documento:');
+        const title = prompt('Título del documento:');
         const url = prompt('URL:');
         if (title && url) {
           area.documents = area.documents || [];
@@ -92,7 +92,7 @@ function loadTabContent(tabName, area) {
         <div id="video-player" class="hidden" style="margin-top:1rem;"></div>
       `;
       document.getElementById('add-video-btn').addEventListener('click', () => {
-        const title = prompt('TÃ­tulo del video:');
+        const title = prompt('Título del video:');
         const url = prompt('URL de YouTube:');
         if (title && url) {
           area.videos = area.videos || [];
@@ -118,9 +118,9 @@ function loadTabContent(tabName, area) {
 
 function startStudySession(area) {
   const basal = calculateBasal();
-  if (basal.mode === 'red') { showToast('No disponible en ProtecciÃ³n'); return; }
-  if (Storage.getCredits() === 0) { showToast('NecesitÃ¡s 1 crÃ©dito'); return; }
-  if (!confirm('Gastar 1 crÃ©dito para iniciar sesiÃ³n?')) return;
+  if (basal.mode === 'red') { showToast('No disponible en Protección'); return; }
+  if (Storage.getCredits() === 0) { showToast('Necesitás 1 crédito'); return; }
+  if (!confirm('Gastar 1 crédito para iniciar sesión?')) return;
   spendCredit();
   const method = document.getElementById('timer-method').value;
   const minutes = method === 'pomodoro' ? 25 : 50;
@@ -151,6 +151,6 @@ function stopSession(area, duration) {
   const intensity = prompt('Intensidad (1-10):', '7');
   const notes = prompt('Notas:', '');
   Storage.addExploit({ areaId: area.id, date: todayStr(), duration, intensity: parseInt(intensity)||7, notes });
-  showToast('SesiÃ³n guardada');
+  showToast('Sesión guardada');
   renderStudies(document.getElementById('dev-content'));
 }

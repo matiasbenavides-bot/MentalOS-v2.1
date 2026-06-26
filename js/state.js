@@ -1,4 +1,4 @@
-﻿import { Storage } from './storage.js';
+import { Storage } from './storage.js';
 export function todayStr() { return new Date().toISOString().split('T')[0]; }
 export function calculateBasal(dateStr = null) {
   const date = dateStr || todayStr();

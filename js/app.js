@@ -1,4 +1,4 @@
-﻿import { Storage } from './storage.js';
+import { Storage } from './storage.js';
 import { calculateBasal } from './state.js';
 import { switchView } from './ui.js';
 import { renderHome } from './components/home.js';

@@ -73,7 +73,7 @@ body {
   border-radius: 16px; padding: 0.3rem 0.6rem; cursor: pointer;
   font-size: 0.75rem;
 }
-.chip-value { font-weight: 500; }
+.chip-value { font-weight: 500; color: white;}
 
 /* Secciones de hábitos */
 .habit-section { margin-bottom: 1rem; }

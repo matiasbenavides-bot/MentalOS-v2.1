@@ -17,9 +17,8 @@ export function renderTraining(container) {
 }
 
 function openNewRoutineModal() {
-  const body = `<input type="text" id="routine-name" placeholder="Nombre de la rutina">`;
-  const footer = '<button class="btn-primary" id="create-routine">Crear</button>';
-  showModal('Nueva rutina', body, footer);
+  showModal('Nueva rutina', '<input type="text" id="routine-name" placeholder="Nombre">',
+    '<button class="btn-primary" id="create-routine">Crear</button><button class="btn-secondary" id="cancel-routine">Cancelar</button>');
   document.getElementById('create-routine').onclick = () => {
     const name = document.getElementById('routine-name').value.trim();
     if (name) {
@@ -30,6 +29,7 @@ function openNewRoutineModal() {
       renderTraining(document.getElementById('dev-content'));
     }
   };
+  document.getElementById('cancel-routine').onclick = closeModal;
 }
 
 function showRoutineDetail(routineId) {
@@ -47,47 +47,68 @@ function showRoutineDetail(routineId) {
 }
 
 function addExercise(routine) {
-  const name = prompt('Nombre del ejercicio:');
-  if (!name) return;
-  const sets = parseInt(prompt('Series:')) || 3;
-  const reps = parseInt(prompt('Repeticiones:')) || 10;
-  const weight = parseInt(prompt('Peso (kg, opcional):')) || 0;
-  routine.exercises.push({ name, sets, reps, weight });
-  Storage.setRoutines(Storage.getRoutines().map(r => r.id === routine.id ? routine : r));
-  showRoutineDetail(routine.id);
+  showModal('Nuevo ejercicio', `
+    <input type="text" id="ex-name" placeholder="Nombre">
+    <input type="number" id="ex-sets" placeholder="Series" value="3" min="1" style="margin-top:0.5rem">
+    <input type="number" id="ex-reps" placeholder="Repeticiones" value="10" min="1" style="margin-top:0.5rem">
+    <input type="number" id="ex-weight" placeholder="Peso (kg, opcional)" value="0" style="margin-top:0.5rem">
+  `, '<button class="btn-primary" id="save-exercise">Agregar</button><button class="btn-secondary" id="cancel-exercise">Cancelar</button>');
+  document.getElementById('save-exercise').onclick = () => {
+    const name = document.getElementById('ex-name').value.trim();
+    if (!name) return;
+    const sets = parseInt(document.getElementById('ex-sets').value) || 3;
+    const reps = parseInt(document.getElementById('ex-reps').value) || 10;
+    const weight = parseInt(document.getElementById('ex-weight').value) || 0;
+    routine.exercises.push({ name, sets, reps, weight });
+    Storage.setRoutines(Storage.getRoutines().map(r => r.id === routine.id ? routine : r));
+    closeModal();
+    showRoutineDetail(routine.id);
+  };
+  document.getElementById('cancel-exercise').onclick = closeModal;
 }
 
 function startRoutine(routine) {
   const basal = calculateBasal();
   if (basal.mode === 'red') { showToast('No disponible en Protección'); return; }
   if (Storage.getCredits() === 0) { showToast('Necesitás 1 crédito'); return; }
-  if (!confirm('Gastar 1 crédito para iniciar rutina?')) return;
-  spendCredit();
-  const detailDiv = document.getElementById('routine-detail');
-  let html = `<h4>${routine.name} - En progreso</h4>`;
-  routine.exercises.forEach((ex, i) => {
-    html += `<div class="card" id="ex-${i}" style="margin:0.5rem 0;">
-      <div><strong>${ex.name}</strong> ${ex.sets}x${ex.reps} ${ex.weight?ex.weight+'kg':''}</div>
-      <div id="ex-${i}-sets" class="sets"></div>
-      <button class="btn-secondary" data-ex-id="${i}" onclick="completeSet(${i}, ${ex.sets})">+1 set</button>
-    </div>`;
-  });
-  html += '<button class="btn-primary full-width" id="finish-routine">Finalizar rutina</button>';
-  detailDiv.innerHTML = html;
-  window.completeSet = function(exIdx, totalSets) {
-    const setDiv = document.getElementById(`ex-${exIdx}-sets`);
-    const current = setDiv.children.length;
-    if (current < totalSets) {
-      setDiv.innerHTML += '<span class="dot" style="background:var(--green)"></span> ';
-      if (current === totalSets - 1) {
-        document.querySelector(`[data-ex-id="${exIdx}"]`).disabled = true;
+  showModal('Iniciar rutina', '<p>¿Gastar 1 crédito para comenzar?</p>',
+    '<button class="btn-primary" id="confirm-routine">Sí</button><button class="btn-secondary" id="cancel-routine-start">Cancelar</button>');
+  document.getElementById('confirm-routine').onclick = () => {
+    closeModal();
+    spendCredit();
+    const detailDiv = document.getElementById('routine-detail');
+    let html = `<h4>${routine.name} - En progreso</h4>`;
+    routine.exercises.forEach((ex, i) => {
+      html += `<div class="card" id="ex-${i}" style="margin:0.5rem 0;">
+        <div><strong>${ex.name}</strong> ${ex.sets}x${ex.reps} ${ex.weight?ex.weight+'kg':''}</div>
+        <div id="ex-${i}-sets" class="sets"></div>
+        <button class="btn-secondary" data-ex-id="${i}" onclick="completeSet(${i}, ${ex.sets})">+1 set</button>
+      </div>`;
+    });
+    html += '<button class="btn-primary full-width" id="finish-routine">Finalizar rutina</button>';
+    detailDiv.innerHTML = html;
+    window.completeSet = function(exIdx, totalSets) {
+      const setDiv = document.getElementById(`ex-${exIdx}-sets`);
+      const current = setDiv.children.length;
+      if (current < totalSets) {
+        setDiv.innerHTML += '<span class="dot" style="background:var(--green)"></span> ';
+        if (current === totalSets - 1) {
+          document.querySelector(`[data-ex-id="${exIdx}"]`).disabled = true;
+        }
       }
-    }
+    };
+    document.getElementById('finish-routine').addEventListener('click', () => {
+      showModal('Rutina completada', '<input type="number" id="routine-intensity" placeholder="Intensidad (1-10)" min="1" max="10" value="7"><textarea id="routine-notes" placeholder="Notas" style="margin-top:0.5rem;"></textarea>',
+        '<button class="btn-primary" id="save-routine-data">Guardar</button>');
+      document.getElementById('save-routine-data').onclick = () => {
+        const intensity = parseInt(document.getElementById('routine-intensity').value) || 7;
+        const notes = document.getElementById('routine-notes').value;
+        Storage.addExploit({ areaId: routine.id, date: todayStr(), duration: 0, intensity, notes });
+        closeModal();
+        showToast('Rutina completada');
+        renderTraining(document.getElementById('dev-content'));
+      };
+    });
   };
-  document.getElementById('finish-routine').addEventListener('click', () => {
-    const notes = prompt('Notas de la sesión:');
-    Storage.addExploit({ areaId: routine.id, date: todayStr(), duration: 0, intensity: parseInt(prompt('Intensidad (1-10):','7'))||7, notes });
-    showToast('Rutina completada');
-    renderTraining(document.getElementById('dev-content'));
-  });
+  document.getElementById('cancel-routine-start').onclick = closeModal;
 }

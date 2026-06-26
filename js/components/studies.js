@@ -18,13 +18,19 @@ export function renderStudies(container) {
     card.addEventListener('click', () => showAreaDetail(card.dataset.areaId));
   });
   document.getElementById('btn-add-area').addEventListener('click', () => {
-    const name = prompt('Nombre del área de estudio:');
-    if (name) {
-      const areas = Storage.getAreas();
-      areas.push({ id: Date.now().toString(), name, type: 'study', documents: [], videos: [], supportText: '' });
-      Storage.setAreas(areas);
-      renderStudies(container);
-    }
+    showModal('Nueva área de estudio', `<input type="text" id="new-area-name" placeholder="Nombre">`, 
+      '<button class="btn-primary" id="create-area">Crear</button><button class="btn-secondary" id="cancel-area">Cancelar</button>');
+    document.getElementById('create-area').onclick = () => {
+      const name = document.getElementById('new-area-name').value.trim();
+      if (name) {
+        const areas = Storage.getAreas();
+        areas.push({ id: Date.now().toString(), name, type: 'study', documents: [], videos: [], supportText: '' });
+        Storage.setAreas(areas);
+        closeModal();
+        renderStudies(container);
+      }
+    };
+    document.getElementById('cancel-area').onclick = closeModal;
   });
 }
 
@@ -44,10 +50,9 @@ function showAreaDetail(areaId) {
     <div id="tab-content"></div>
   `;
 
-  const tabs = detailDiv.querySelectorAll('.tab-btn');
-  tabs.forEach(tab => {
+  detailDiv.querySelectorAll('.tab-btn').forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
+      detailDiv.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       loadTabContent(tab.dataset.tab, area);
     });
@@ -71,18 +76,33 @@ function loadTabContent(tabName, area) {
       break;
     case 'documents':
       contentDiv.innerHTML = `
-        <div id="docs-list">${(area.documents||[]).map((d,i) => `<div class="card"><a href="${d.url}" target="_blank">${d.title}</a><button class="btn-secondary" data-del-doc="${i}" style="float:right">X</button></div>`).join('')}</div>
+        <div id="docs-list">${(area.documents||[]).map((d,i) => `<div class="card"><a href="${d.url}" target="_blank">${d.title}</a><button class="btn-secondary remove-doc" data-index="${i}" style="float:right">X</button></div>`).join('')}</div>
         <button class="btn-secondary full-width" id="add-doc-btn">+ Agregar documento</button>
       `;
       document.getElementById('add-doc-btn').addEventListener('click', () => {
-        const title = prompt('Título del documento:');
-        const url = prompt('URL:');
-        if (title && url) {
-          area.documents = area.documents || [];
-          area.documents.push({ title, url });
+        showModal('Agregar documento', `<input type="text" id="doc-title" placeholder="Título"><input type="text" id="doc-url" placeholder="URL" style="margin-top:0.5rem">`,
+          '<button class="btn-primary" id="save-doc">Guardar</button><button class="btn-secondary" id="cancel-doc">Cancelar</button>');
+        document.getElementById('save-doc').onclick = () => {
+          const title = document.getElementById('doc-title').value.trim();
+          const url = document.getElementById('doc-url').value.trim();
+          if (title && url) {
+            area.documents = area.documents || [];
+            area.documents.push({ title, url });
+            Storage.setAreas(Storage.getAreas().map(a => a.id === area.id ? area : a));
+            closeModal();
+            loadTabContent('documents', area);
+          }
+        };
+        document.getElementById('cancel-doc').onclick = closeModal;
+      });
+      // Remove doc buttons
+      document.querySelectorAll('.remove-doc').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          area.documents.splice(idx, 1);
           Storage.setAreas(Storage.getAreas().map(a => a.id === area.id ? area : a));
           loadTabContent('documents', area);
-        }
+        });
       });
       break;
     case 'videos':
@@ -92,14 +112,29 @@ function loadTabContent(tabName, area) {
         <div id="video-player" class="hidden" style="margin-top:1rem;"></div>
       `;
       document.getElementById('add-video-btn').addEventListener('click', () => {
-        const title = prompt('Título del video:');
-        const url = prompt('URL de YouTube:');
-        if (title && url) {
-          area.videos = area.videos || [];
-          area.videos.push({ title, url });
-          Storage.setAreas(Storage.getAreas().map(a => a.id === area.id ? area : a));
-          loadTabContent('videos', area);
-        }
+        showModal('Agregar video', `<input type="text" id="video-title" placeholder="Título"><input type="text" id="video-url" placeholder="URL de YouTube" style="margin-top:0.5rem">`,
+          '<button class="btn-primary" id="save-video">Guardar</button><button class="btn-secondary" id="cancel-video">Cancelar</button>');
+        document.getElementById('save-video').onclick = () => {
+          const title = document.getElementById('video-title').value.trim();
+          const url = document.getElementById('video-url').value.trim();
+          if (title && url) {
+            area.videos = area.videos || [];
+            area.videos.push({ title, url });
+            Storage.setAreas(Storage.getAreas().map(a => a.id === area.id ? area : a));
+            closeModal();
+            loadTabContent('videos', area);
+          }
+        };
+        document.getElementById('cancel-video').onclick = closeModal;
+      });
+      // View video buttons
+      document.querySelectorAll('.view-video').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const url = btn.dataset.url;
+          const player = document.getElementById('video-player');
+          player.innerHTML = `<iframe src="${url.replace('watch?v=','embed/')}" frameborder="0" allowfullscreen style="width:100%; height:200px;"></iframe>`;
+          player.classList.remove('hidden');
+        });
       });
       break;
     case 'notes':
@@ -120,37 +155,47 @@ function startStudySession(area) {
   const basal = calculateBasal();
   if (basal.mode === 'red') { showToast('No disponible en Protección'); return; }
   if (Storage.getCredits() === 0) { showToast('Necesitás 1 crédito'); return; }
-  if (!confirm('Gastar 1 crédito para iniciar sesión?')) return;
-  spendCredit();
-  const method = document.getElementById('timer-method').value;
-  const minutes = method === 'pomodoro' ? 25 : 50;
-  let remaining = minutes * 60;
-  const timerDiv = document.getElementById('timer-display');
-  const stopBtn = document.getElementById('stop-timer-btn');
-  const startBtn = document.getElementById('start-session-btn');
-  timerDiv.classList.remove('hidden');
-  stopBtn.classList.remove('hidden');
-  startBtn.classList.add('hidden');
-  timerInterval = setInterval(() => {
-    const mins = Math.floor(remaining / 60);
-    const secs = remaining % 60;
-    timerDiv.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
-    remaining--;
-    if (remaining < 0) {
+  showModal('Iniciar sesión', '<p>¿Gastar 1 crédito para comenzar?</p>',
+    '<button class="btn-primary" id="confirm-session">Sí</button><button class="btn-secondary" id="cancel-session">Cancelar</button>');
+  document.getElementById('confirm-session').onclick = () => {
+    closeModal();
+    spendCredit();
+    const method = document.getElementById('timer-method').value;
+    const minutes = method === 'pomodoro' ? 25 : 50;
+    let remaining = minutes * 60;
+    const timerDiv = document.getElementById('timer-display');
+    const stopBtn = document.getElementById('stop-timer-btn');
+    const startBtn = document.getElementById('start-session-btn');
+    timerDiv.classList.remove('hidden');
+    stopBtn.classList.remove('hidden');
+    startBtn.classList.add('hidden');
+    timerInterval = setInterval(() => {
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      timerDiv.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+      remaining--;
+      if (remaining < 0) {
+        clearInterval(timerInterval);
+        finishSession(area, minutes);
+      }
+    }, 1000);
+    stopBtn.addEventListener('click', () => {
       clearInterval(timerInterval);
-      stopSession(area, minutes);
-    }
-  }, 1000);
-  stopBtn.addEventListener('click', () => {
-    clearInterval(timerInterval);
-    stopSession(area, Math.round((minutes * 60 - remaining) / 60));
-  });
+      finishSession(area, Math.round((minutes * 60 - remaining) / 60));
+    });
+  };
+  document.getElementById('cancel-session').onclick = closeModal;
 }
 
-function stopSession(area, duration) {
-  const intensity = prompt('Intensidad (1-10):', '7');
-  const notes = prompt('Notas:', '');
-  Storage.addExploit({ areaId: area.id, date: todayStr(), duration, intensity: parseInt(intensity)||7, notes });
-  showToast('Sesión guardada');
-  renderStudies(document.getElementById('dev-content'));
+function finishSession(area, duration) {
+  showModal('Sesión finalizada', `<input type="number" id="session-intensity" placeholder="Intensidad (1-10)" min="1" max="10" value="7"><textarea id="session-notes" placeholder="Notas" style="margin-top:0.5rem;"></textarea>`,
+    '<button class="btn-primary" id="save-session-data">Guardar</button>');
+  document.getElementById('save-session-data').onclick = () => {
+    const intensity = parseInt(document.getElementById('session-intensity').value) || 7;
+    const notes = document.getElementById('session-notes').value;
+    Storage.addExploit({ areaId: area.id, date: todayStr(), duration, intensity, notes });
+    closeModal();
+    showToast('Sesión guardada');
+    renderStudies(document.getElementById('dev-content'));
+  };
 }

@@ -3,6 +3,9 @@ import { todayStr, calculateBasal, updateCreditsOnCheckin } from '../state.js';
 import { showModal, closeModal, showToast } from '../ui.js';
 import { updateTopBar } from '../app.js';
 
+let draggedItem = null;
+let draggedId = null;
+
 export function renderHome() {
   const vp = document.getElementById('viewport');
   const today = todayStr();
@@ -10,7 +13,7 @@ export function renderHome() {
   const todayLog = logs[today] || { core: {}, habits: {} };
   const habits = Storage.getHabits().sort((a,b) => (a.order||0) - (b.order||0));
 
-  // Core chips (sin emojis)
+  // Core chips
   const coreItems = [
     { id: 'sleep', label: 'Sueño', value: todayLog.core.sleep, fmt: v => v !== null ? v+'h' : '--' },
     { id: 'nutrition', label: 'Nutrición', value: todayLog.core.nutrition, fmt: v => v ? 'Sí' : 'No' },
@@ -27,7 +30,6 @@ export function renderHome() {
   });
   html += '</div>';
 
-  // Secciones de hábitos
   const sections = [
     { key: 'morning', title: 'Mañana' },
     { key: 'afternoon', title: 'Tarde' },
@@ -41,7 +43,8 @@ export function renderHome() {
       <div class="habit-list" id="habit-list-${sec.key}">
         ${sectionHabits.map(h => {
           const done = todayLog.habits?.[h.id] === true;
-          return `<div class="habit-item ${done ? 'completed' : ''}" data-id="${h.id}" draggable="false">
+          return `<div class="habit-item ${done ? 'completed' : ''}" data-id="${h.id}" draggable="true">
+            <div class="drag-handle">⋮⋮</div>
             <div class="habit-checkbox"></div>
             <div class="habit-info">
               <span class="habit-name">${h.name}</span>
@@ -82,10 +85,9 @@ export function renderHome() {
   document.querySelectorAll('.habit-item').forEach(item => {
     const habitId = item.dataset.id;
     item.addEventListener('click', (e) => {
-      if (e.target.closest('.swipe-delete') || e.target.closest('.swipe-edit')) return;
+      if (e.target.closest('.swipe-delete') || e.target.closest('.swipe-edit') || e.target.closest('.drag-handle')) return;
       toggleCustomHabit(habitId);
     });
-    // Swipe
     addSwipeListeners(item, habitId);
   });
 
@@ -99,7 +101,6 @@ export function renderHome() {
 
   document.getElementById('open-checkin-btn').onclick = openCheckinModal;
 
-  // Drag and drop (long press)
   enableDragDrop();
 }
 
@@ -218,16 +219,16 @@ function showDaySummary(dateStr) {
   document.getElementById('close-summary').onclick = closeModal;
 }
 
-/* Swipe handlers */
+/* Swipe */
 function addSwipeListeners(item, habitId) {
   let startX = 0;
-  item.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; });
+  item.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, {passive: true});
   item.addEventListener('touchend', (e) => {
     const diff = e.changedTouches[0].clientX - startX;
     if (Math.abs(diff) > 60) {
-      if (diff > 0) { // Swipe right: edit
+      if (diff > 0) {
         openEditHabitModal(habitId);
-      } else { // Swipe left: delete
+      } else {
         if (confirm('¿Eliminar hábito?')) {
           const habits = Storage.getHabits().filter(h => h.id !== habitId);
           Storage.setHabits(habits);
@@ -264,36 +265,108 @@ function openEditHabitModal(habitId) {
   document.getElementById('cancel-edit').onclick = closeModal;
 }
 
-/* Drag and drop básico (long press) */
+/* Drag & drop mejorado */
 function enableDragDrop() {
+  const items = document.querySelectorAll('.habit-item');
+  items.forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+  });
+
   const lists = document.querySelectorAll('.habit-list');
   lists.forEach(list => {
-    list.addEventListener('dragover', e => e.preventDefault());
-    list.addEventListener('drop', e => {
-      e.preventDefault();
-      const draggedId = e.dataTransfer.getData('text/plain');
-      const draggedEl = document.querySelector(`.habit-item[data-id="${draggedId}"]`);
-      if (draggedEl && list !== draggedEl.parentNode) {
-        const newSection = list.closest('.habit-section').dataset.section;
-        const habits = Storage.getHabits();
-        const habit = habits.find(h => h.id === draggedId);
-        if (habit) {
-          habit.section = newSection;
-          habit.order = list.children.length;
-          Storage.setHabits(habits);
-          renderHome();
-        }
-      }
-    });
-    list.querySelectorAll('.habit-item').forEach(item => {
-      item.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', item.dataset.id);
-        item.classList.add('dragging');
-      });
-      item.addEventListener('dragend', () => {
-        item.classList.remove('dragging');
-      });
-      item.setAttribute('draggable', 'true');
-    });
+    list.addEventListener('dragover', handleDragOver);
+    list.addEventListener('dragleave', handleDragLeave);
+    list.addEventListener('drop', handleDrop);
   });
+}
+
+function handleDragStart(e) {
+  draggedItem = this;
+  draggedId = this.dataset.id;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', draggedId);
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.habit-item').forEach(el => el.classList.remove('drag-over'));
+  draggedItem = null;
+  draggedId = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const list = this;
+  const afterElement = getDragAfterElement(list, e.clientY);
+  // Remove previous drag-over
+  list.querySelectorAll('.habit-item').forEach(el => el.classList.remove('drag-over'));
+  if (afterElement) {
+    afterElement.classList.add('drag-over');
+  }
+}
+
+function handleDragLeave(e) {
+  this.querySelectorAll('.habit-item').forEach(el => el.classList.remove('drag-over'));
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const list = this;
+  const newSection = list.closest('.habit-section').dataset.section;
+  const habits = Storage.getHabits();
+  const habit = habits.find(h => h.id === draggedId);
+  if (!habit) return;
+
+  const afterElement = getDragAfterElement(list, e.clientY);
+  // Mover a nueva sección si es distinta
+  if (habit.section !== newSection) {
+    habit.section = newSection;
+  }
+  // Reordenar dentro de la lista
+  if (afterElement) {
+    const afterId = afterElement.dataset.id;
+    const afterHabit = habits.find(h => h.id === afterId);
+    const targetOrder = afterHabit.order || 0;
+    // Reasignar órdenes en la sección destino
+    const sectionHabits = habits.filter(h => h.section === newSection).sort((a,b) => a.order - b.order);
+    // Remover habit actual
+    const idx = sectionHabits.findIndex(h => h.id === habit.id);
+    if (idx !== -1) sectionHabits.splice(idx, 1);
+    // Insertar después del elemento de referencia
+    const insertIdx = sectionHabits.findIndex(h => h.id === afterId);
+    sectionHabits.splice(insertIdx !== -1 ? insertIdx : 0, 0, habit);
+    // Reasignar órdenes
+    sectionHabits.forEach((h, i) => { h.order = i; });
+    // Actualizar otros si vienen de otra sección
+    if (habit.section !== newSection) {
+      // Limpiar orden en sección anterior
+      const oldSectionHabits = habits.filter(h => h.section === habit.section && h.id !== habit.id).sort((a,b) => a.order - b.order);
+      oldSectionHabits.forEach((h, i) => { h.order = i; });
+    }
+  } else {
+    // Soltar al final de la lista
+    const sectionHabits = habits.filter(h => h.section === newSection).sort((a,b) => a.order - b.order);
+    const idx = sectionHabits.findIndex(h => h.id === habit.id);
+    if (idx !== -1) sectionHabits.splice(idx, 1);
+    sectionHabits.push(habit);
+    sectionHabits.forEach((h, i) => { h.order = i; });
+  }
+  Storage.setHabits(habits);
+  renderHome();
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.habit-item:not(.dragging)')];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }

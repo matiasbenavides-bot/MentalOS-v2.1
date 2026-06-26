@@ -1,16 +1,494 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""MentalOS - Mejora de interactividad: drag & drop intra-sección, sin prompts nativos."""
+"""MentalOS – Proyecto completo (HTML + CSS + JS) con codificación UTF-8 correcta."""
 
 import os
 
-# Asegurar carpetas
-os.makedirs("js/components", exist_ok=True)
+BASE_DIR = "."  # genera los archivos en la carpeta actual
+DIRS = ["css", "js", "js/components"]
 
-files = {}
+FILES = {}
 
-# ==================== js/components/home.js (mejorado) ====================
-files["js/components/home.js"] = r"""import { Storage } from '../storage.js';
+# ==================== index.html ====================
+FILES["index.html"] = r"""<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>MentalOS</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="pin-screen" class="fullscreen-center">
+    <div class="pin-card">
+      <h1>MentalOS</h1>
+      <input type="password" id="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*">
+      <button id="pin-btn" class="btn-primary full-width">Entrar</button>
+      <p id="pin-error" class="text-error hidden"></p>
+    </div>
+  </div>
+
+  <div id="app" class="app-container hidden">
+    <header class="topbar" id="topbar">
+      <div class="topbar-row">
+        <div class="status-badge" id="status-badge">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-score">--</span>
+        </div>
+        <nav class="top-nav" id="top-nav">
+          <button class="top-nav-btn active" data-view="home">Hoy</button>
+          <button class="top-nav-btn" data-view="development">Desarrollo</button>
+          <button class="top-nav-btn" data-view="analysis">Análisis</button>
+          <button class="top-nav-btn" data-view="emergency" id="nav-emergency">Emergencia</button>
+        </nav>
+        <div class="topbar-actions">
+          <span class="credits-badge">⚡<span id="credits-count">0</span></span>
+          <button class="icon-btn" id="config-btn" title="Configuración">⚙</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="viewport" class="viewport"></main>
+  </div>
+
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-container" id="modal-container">
+      <div class="modal-header"><h2 id="modal-title"></h2><button class="modal-close" id="modal-close">✕</button></div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>"""
+
+# ==================== css/style.css ====================
+FILES["css/style.css"] = r"""/* MentalOS – Neutralidad sensorial, móvil primero */
+:root {
+  --bg: #121212;
+  --surface: #1c1c1c;
+  --text: #d0d0d0;
+  --text-secondary: #888;
+  --border: #2a2a2a;
+  --accent: #5c8aff;
+  --green: #4caf50;
+  --yellow: #ffc107;
+  --red: #f44336;
+  --green-bg: rgba(76,175,80,0.12);
+  --yellow-bg: rgba(255,193,7,0.12);
+  --red-bg: rgba(244,67,54,0.12);
+  --radius: 10px;
+  --transition: 0.2s ease;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  height: 100vh; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.fullscreen-center { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); }
+.hidden { display: none !important; }
+
+.pin-card { text-align: center; padding: 2rem; width: 260px; }
+.pin-card h1 { margin-bottom: 1.5rem; font-size: 2rem; color: var(--text); }
+#pin-input {
+  width: 100%; padding: 0.7rem; font-size: 1.4rem; text-align: center;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  border-radius: var(--radius); letter-spacing: 0.5em;
+}
+.text-error { color: var(--red); margin-top: 0.5rem; font-size: 0.85rem; }
+
+.app-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Topbar */
+.topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.6rem; flex-shrink: 0;
+}
+.topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 0.3rem; }
+.status-badge { display: flex; align-items: center; gap: 0.3rem; }
+.status-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+.status-dot.green { background: var(--green); }
+.status-dot.yellow { background: var(--yellow); }
+.status-dot.red { background: var(--red); }
+.status-score { font-weight: 700; font-size: 0.9rem; }
+
+.top-nav { display: flex; gap: 0.2rem; }
+.top-nav-btn {
+  background: none; border: none; color: var(--text-secondary); font-size: 0.7rem;
+  padding: 0.2rem 0.4rem; border-radius: 4px; cursor: pointer;
+}
+.top-nav-btn.active { color: var(--accent); background: rgba(92,138,255,0.12); }
+.topbar-actions { display: flex; align-items: center; gap: 0.4rem; }
+.credits-badge { font-weight: 600; font-size: 0.8rem; }
+.icon-btn { background: none; border: none; color: var(--text); font-size: 1.1rem; cursor: pointer; }
+
+/* Viewport */
+.viewport {
+  flex: 1; overflow-y: auto; padding: 0.6rem;
+  max-width: 600px; margin: 0 auto; width: 100%;
+}
+
+/* Chips Core */
+.core-quick-panel { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.8rem; }
+.core-chip {
+  display: flex; align-items: center; gap: 0.2rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 0.3rem 0.6rem; cursor: pointer;
+  font-size: 0.75rem;
+}
+.chip-value { font-weight: 500; }
+
+/* Secciones de hábitos */
+.habit-section { margin-bottom: 1rem; }
+.section-title { font-size: 0.85rem; margin-bottom: 0.3rem; font-weight: 600; color: var(--text-secondary); }
+.habit-list { display: flex; flex-direction: column; gap: 0.3rem; min-height: 30px; }
+
+.habit-item {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0.5rem 0.6rem;
+  cursor: pointer; user-select: none;
+  transition: transform 0.15s, opacity 0.15s;
+  position: relative; overflow: hidden;
+}
+.habit-item.dragging { opacity: 0.5; transform: scale(0.96); }
+.habit-item.drag-over { border-color: var(--accent); background: rgba(92,138,255,0.12); }
+.habit-item.completed { opacity: 0.6; }
+.drag-handle { color: var(--text-secondary); cursor: grab; font-size: 1.2rem; margin-right: 0.2rem; }
+.habit-checkbox {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--border); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; color: transparent;
+}
+.habit-item.completed .habit-checkbox {
+  background: var(--green); border-color: var(--green); color: white;
+}
+.habit-info { flex: 1; display: flex; justify-content: space-between; align-items: center; }
+.habit-name { font-size: 0.8rem; }
+.habit-duration { font-size: 0.7rem; color: var(--text-secondary); }
+
+/* Swipe actions */
+.swipe-delete {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 80px;
+  background: var(--red); color: white; display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 0.8rem; transform: translateX(100%); transition: transform 0.2s;
+}
+.swipe-edit {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 80px;
+  background: var(--accent); color: white; display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 0.8rem; transform: translateX(-100%); transition: transform 0.2s;
+}
+
+.btn-add-habit {
+  background: none; border: 1px dashed var(--border); color: var(--text-secondary);
+  padding: 0.4rem; border-radius: var(--radius); cursor: pointer;
+  text-align: center; font-size: 0.75rem; margin-top: 0.2rem;
+}
+
+/* Calendario semanal */
+.mini-calendar { display: flex; gap: 0.3rem; margin: 0.8rem 0; justify-content: center; }
+.calendar-day {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid var(--border); cursor: pointer;
+  font-size: 0.6rem; display: flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--text-secondary);
+}
+.calendar-day.green { background: var(--green); border-color: var(--green); color: white; }
+.calendar-day.yellow { background: var(--yellow); border-color: var(--yellow); color: black; }
+.calendar-day.red { background: var(--red); border-color: var(--red); color: white; }
+
+/* Botones */
+.btn-primary {
+  display: inline-block; background: var(--accent); color: white; border: none;
+  padding: 0.6rem 1rem; border-radius: var(--radius); font-weight: 600; cursor: pointer;
+  font-size: 0.85rem;
+}
+.btn-secondary {
+  background: transparent; border: 1px solid var(--border); color: var(--text);
+  padding: 0.5rem 0.8rem; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem;
+}
+.full-width { width: 100%; display: block; }
+.btn-giant {
+  display: block; width: 100%; padding: 2rem; font-size: 1.2rem;
+  background: var(--red); color: white; border: none; border-radius: var(--radius);
+  cursor: pointer; font-weight: 700; text-align: center;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.modal-container {
+  background: var(--surface); border-radius: 14px 14px 0 0; width: 100%;
+  max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 1.2rem 1rem 1.8rem;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(15%); } to { transform: translateY(0); } }
+.modal-header { display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
+.modal-close { background: none; border: none; color: var(--text); font-size: 1.3rem; cursor: pointer; }
+.modal-body { margin-bottom: 0.8rem; }
+.modal-footer { display: flex; gap: 0.4rem; justify-content: flex-end; }
+
+.form-group { margin-bottom: 0.8rem; }
+.form-group label { display: block; margin-bottom: 0.2rem; font-weight: 500; font-size: 0.8rem; }
+input, select, textarea {
+  width: 100%; padding: 0.5rem; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); border-radius: 6px; font-size: 0.85rem; font-family: inherit;
+}
+textarea { resize: vertical; min-height: 70px; }
+
+/* Pestañas */
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0.8rem; }
+.tab-btn {
+  flex: 1; background: none; border: none; color: var(--text-secondary);
+  padding: 0.4rem; font-size: 0.75rem; cursor: pointer; border-bottom: 2px solid transparent;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Temporizador */
+.timer-display { font-size: 2rem; text-align: center; font-weight: 700; padding: 1rem; }
+
+/* Contadores acumulativos */
+.accumulator { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.accumulator-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.8rem; text-align: center; flex: 1; min-width: 100px;
+}
+.accumulator-value { font-size: 1.8rem; font-weight: 700; }
+.accumulator-label { font-size: 0.7rem; color: var(--text-secondary); }
+
+/* Chart */
+.chart-container { background: var(--surface); border-radius: var(--radius); padding: 0.8rem; margin-bottom: 0.8rem; }
+
+/* Checklist */
+.checklist-item {
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem;
+  background: var(--surface); border-radius: var(--radius); margin-bottom: 0.4rem;
+  border: 1px solid var(--border);
+}
+.checklist-item.completed { background: rgba(76,175,80,0.12); border-color: var(--green); }
+.checklist-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 0.6rem 1.2rem; border-radius: 20px; z-index: 600;
+  animation: fadeInOut 2s ease forwards;
+}
+@keyframes fadeInOut {
+  0% { opacity: 0; bottom: 40px; } 20% { opacity: 1; bottom: 60px; }
+  80% { opacity: 1; bottom: 60px; } 100% { opacity: 0; bottom: 40px; }
+}
+
+/* Reproductor interno */
+.video-iframe { width: 100%; height: 200px; border: none; border-radius: var(--radius); margin: 0.5rem 0; }
+"""
+
+# ==================== js/storage.js ====================
+FILES["js/storage.js"] = r"""const PREFIX = 'mentalo_';
+export const Storage = {
+  get(key) {
+    try { return JSON.parse(localStorage.getItem(PREFIX + key)); } catch { return null; }
+  },
+  set(key, value) { localStorage.setItem(PREFIX + key, JSON.stringify(value)); },
+  getLogs() { return this.get('logs') || {}; },
+  addLog(date, data) {
+    const logs = this.getLogs();
+    logs[date] = data;
+    this.set('logs', logs);
+  },
+  getConfig() {
+    return this.get('config') || {
+      pin: '2207',
+      emergencyChecklist: ['Ducharse o lavarse la cara','Comer algo','Salir 5 minutos al aire libre','Mensaje a contacto de confianza','Leer 1 página de un libro favorito'],
+      supportMessage: 'Tu cerebro está experimentando una baja química temporal. Esto va a pasar. Solo cumple estas 5 cosas y tu día habrá sido un éxito.'
+    };
+  },
+  setConfig(c) { this.set('config', c); },
+  getHabits() {
+    let habits = this.get('habits');
+    if (!habits || habits.length === 0) {
+      habits = [
+        { id: 'h1', name: 'Hidratación y Luz Solar', section: 'morning', duration: 5, order: 0 },
+        { id: 'h2', name: 'Lectura técnica', section: 'morning', duration: 20, order: 1 },
+        { id: 'h3', name: 'Ejercicio', section: 'afternoon', duration: 45, order: 0 },
+        { id: 'h4', name: 'Movilidad', section: 'evening', duration: 10, order: 0 },
+        { id: 'h5', name: 'Planificar día siguiente', section: 'evening', duration: 5, order: 1 }
+      ];
+      this.set('habits', habits);
+    }
+    return habits;
+  },
+  setHabits(h) { this.set('habits', h); },
+  getAreas() { return this.get('areas') || []; },
+  setAreas(a) { this.set('areas', a); },
+  getRoutines() { return this.get('routines') || []; },
+  setRoutines(r) { this.set('routines', r); },
+  getExploitLog() { return this.get('exploit') || []; },
+  addExploit(session) {
+    const log = this.getExploitLog();
+    log.push(session);
+    this.set('exploit', log);
+  },
+  getCredits() { return this.get('credits') || 0; },
+  setCredits(c) { this.set('credits', c); },
+  exportAll() {
+    return JSON.stringify({ logs: this.getLogs(), config: this.getConfig(), habits: this.getHabits(), areas: this.getAreas(), routines: this.getRoutines(), exploit: this.getExploitLog(), credits: this.getCredits() }, null, 2);
+  }
+};
+"""
+
+# ==================== js/state.js ====================
+FILES["js/state.js"] = r"""import { Storage } from './storage.js';
+export function todayStr() { return new Date().toISOString().split('T')[0]; }
+export function calculateBasal(dateStr = null) {
+  const date = dateStr || todayStr();
+  const logs = Storage.getLogs();
+  const log = logs[date];
+  if (!log || !log.core) return { score: null, mode: 'unknown' };
+  const core = log.core;
+  if (core.emotion !== undefined && core.emotion <= 2) return { score: 0, mode: 'red', reason: 'emotional' };
+  if (core.sleep !== undefined && core.sleep < 5) return { score: 0, mode: 'red', reason: 'sleep' };
+  const socialDays = [];
+  for (let i=0; i<3; i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    socialDays.push(logs[d.toISOString().split('T')[0]]?.core?.social);
+  }
+  if (socialDays.filter(s => s === false).length >= 3) return { score: 0, mode: 'red', reason: 'social' };
+  let score = 0, total = 0;
+  const weights = { sleep: 30, emotion: 30, nutrition: 15, movement: 15, social: 10 };
+  if (core.sleep !== undefined) { score += Math.min(core.sleep/8,1)*weights.sleep; total += weights.sleep; }
+  if (core.emotion !== undefined) { score += (core.emotion/5)*weights.emotion; total += weights.emotion; }
+  if (core.nutrition !== undefined) { score += (core.nutrition?1:0)*weights.nutrition; total += weights.nutrition; }
+  if (core.movement !== undefined) { score += (core.movement?1:0)*weights.movement; total += weights.movement; }
+  if (core.social !== undefined) { score += (core.social?1:0)*weights.social; total += weights.social; }
+  if (total === 0) return { score: null, mode: 'unknown' };
+  const final = Math.round((score/total)*100);
+  if (final >= 70) return { score: final, mode: 'green' };
+  if (final >= 40) return { score: final, mode: 'yellow' };
+  return { score: final, mode: 'red' };
+}
+export function updateCreditsOnCheckin(allCoreOk) {
+  let credits = Storage.getCredits();
+  if (allCoreOk && credits < 3) { credits++; Storage.setCredits(credits); }
+  return credits;
+}
+export function spendCredit() {
+  let credits = Storage.getCredits();
+  if (credits > 0) { credits--; Storage.setCredits(credits); return true; }
+  return false;
+}
+"""
+
+# ==================== js/ui.js ====================
+FILES["js/ui.js"] = r"""export function showModal(title, bodyHtml, footerHtml = '') {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-footer').innerHTML = footerHtml;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  document.getElementById('modal-close').onclick = closeModal;
+  document.getElementById('modal-overlay').onclick = (e) => { if (e.target === e.currentTarget) closeModal(); };
+}
+export function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+export function showToast(message, duration = 2000) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), duration);
+}
+export function switchView(view) {
+  document.querySelectorAll('.top-nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.top-nav-btn[data-view="${view}"]`);
+  if (btn) btn.classList.add('active');
+}
+"""
+
+# ==================== js/app.js ====================
+FILES["js/app.js"] = r"""import { Storage } from './storage.js';
+import { calculateBasal } from './state.js';
+import { switchView } from './ui.js';
+import { renderHome } from './components/home.js';
+import { renderDevelopment } from './components/development.js';
+import { renderAnalysis } from './components/analysis.js';
+import { renderEmergency } from './components/emergency.js';
+import { openConfigModal } from './components/config.js';
+
+let currentView = 'home';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const config = Storage.getConfig();
+  document.getElementById('pin-btn').addEventListener('click', () => {
+    if (document.getElementById('pin-input').value === config.pin) {
+      document.getElementById('pin-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      initApp();
+    } else {
+      document.getElementById('pin-error').classList.remove('hidden');
+      document.getElementById('pin-error').textContent = 'PIN incorrecto';
+    }
+  });
+
+  document.querySelectorAll('.top-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchView(btn.dataset.view);
+      currentView = btn.dataset.view;
+      navigate(currentView);
+    });
+  });
+
+  document.getElementById('config-btn').addEventListener('click', openConfigModal);
+});
+
+function initApp() { navigate('home'); updateTopBar(); }
+
+export function navigate(view) {
+  switch(view) {
+    case 'home': renderHome(); break;
+    case 'development': renderDevelopment(); break;
+    case 'analysis': renderAnalysis(); break;
+    case 'emergency': renderEmergency(); break;
+  }
+  updateTopBar();
+}
+
+export function updateTopBar() {
+  const basal = calculateBasal();
+  const credits = Storage.getCredits();
+  document.getElementById('status-dot').className = 'status-dot ' + basal.mode;
+  document.getElementById('status-score').textContent = basal.score ?? '--';
+  document.getElementById('credits-count').textContent = credits;
+
+  const navDev = document.querySelector('.top-nav-btn[data-view="development"]');
+  const navAnalysis = document.querySelector('.top-nav-btn[data-view="analysis"]');
+  const navEmergency = document.getElementById('nav-emergency');
+
+  if (basal.mode === 'red') {
+    if (navDev) navDev.classList.add('hidden');
+    if (navAnalysis) navAnalysis.classList.add('hidden');
+    if (navEmergency) navEmergency.classList.remove('hidden');
+    if (currentView === 'development' || currentView === 'analysis') {
+      navigate('home');
+      switchView('home');
+    }
+  } else {
+    if (navDev) navDev.classList.remove('hidden');
+    if (navAnalysis) navAnalysis.classList.remove('hidden');
+  }
+  currentView = document.querySelector('.top-nav-btn.active')?.dataset.view || 'home';
+}
+"""
+
+# ==================== js/components/home.js (con drag & drop mejorado) ====================
+FILES["js/components/home.js"] = r"""import { Storage } from '../storage.js';
 import { todayStr, calculateBasal, updateCreditsOnCheckin } from '../state.js';
 import { showModal, closeModal, showToast } from '../ui.js';
 import { updateTopBar } from '../app.js';
@@ -241,11 +719,16 @@ function addSwipeListeners(item, habitId) {
       if (diff > 0) {
         openEditHabitModal(habitId);
       } else {
-        if (confirm('¿Eliminar hábito?')) {
+        // Usar modal de confirmación en vez de confirm nativo
+        showModal('Eliminar hábito', '<p>¿Estás seguro de que querés eliminar este hábito?</p>',
+          `<button class="btn-primary" id="confirm-delete">Sí, eliminar</button><button class="btn-secondary" id="cancel-delete">Cancelar</button>`);
+        document.getElementById('confirm-delete').onclick = () => {
           const habits = Storage.getHabits().filter(h => h.id !== habitId);
           Storage.setHabits(habits);
+          closeModal();
           renderHome();
-        }
+        };
+        document.getElementById('cancel-delete').onclick = closeModal;
       }
     }
   });
@@ -313,7 +796,6 @@ function handleDragOver(e) {
   e.dataTransfer.dropEffect = 'move';
   const list = this;
   const afterElement = getDragAfterElement(list, e.clientY);
-  // Remove previous drag-over
   list.querySelectorAll('.habit-item').forEach(el => el.classList.remove('drag-over'));
   if (afterElement) {
     afterElement.classList.add('drag-over');
@@ -333,38 +815,28 @@ function handleDrop(e) {
   if (!habit) return;
 
   const afterElement = getDragAfterElement(list, e.clientY);
-  // Mover a nueva sección si es distinta
+  // Actualizar sección si cambió
   if (habit.section !== newSection) {
     habit.section = newSection;
   }
-  // Reordenar dentro de la lista
+  // Reordenar
+  const sectionHabits = habits.filter(h => h.section === newSection).sort((a,b) => a.order - b.order);
+  const oldIdx = sectionHabits.findIndex(h => h.id === habit.id);
+  if (oldIdx !== -1) sectionHabits.splice(oldIdx, 1);
+  
   if (afterElement) {
     const afterId = afterElement.dataset.id;
-    const afterHabit = habits.find(h => h.id === afterId);
-    const targetOrder = afterHabit.order || 0;
-    // Reasignar órdenes en la sección destino
-    const sectionHabits = habits.filter(h => h.section === newSection).sort((a,b) => a.order - b.order);
-    // Remover habit actual
-    const idx = sectionHabits.findIndex(h => h.id === habit.id);
-    if (idx !== -1) sectionHabits.splice(idx, 1);
-    // Insertar después del elemento de referencia
     const insertIdx = sectionHabits.findIndex(h => h.id === afterId);
     sectionHabits.splice(insertIdx !== -1 ? insertIdx : 0, 0, habit);
-    // Reasignar órdenes
-    sectionHabits.forEach((h, i) => { h.order = i; });
-    // Actualizar otros si vienen de otra sección
-    if (habit.section !== newSection) {
-      // Limpiar orden en sección anterior
-      const oldSectionHabits = habits.filter(h => h.section === habit.section && h.id !== habit.id).sort((a,b) => a.order - b.order);
-      oldSectionHabits.forEach((h, i) => { h.order = i; });
-    }
   } else {
-    // Soltar al final de la lista
-    const sectionHabits = habits.filter(h => h.section === newSection).sort((a,b) => a.order - b.order);
-    const idx = sectionHabits.findIndex(h => h.id === habit.id);
-    if (idx !== -1) sectionHabits.splice(idx, 1);
     sectionHabits.push(habit);
-    sectionHabits.forEach((h, i) => { h.order = i; });
+  }
+  // Reasignar órdenes
+  sectionHabits.forEach((h, i) => { h.order = i; });
+  // Ajustar órdenes en la sección anterior si cambió
+  if (habit.section !== newSection) {
+    const oldSectionHabits = habits.filter(h => h.section === habit.section).sort((a,b) => a.order - b.order);
+    oldSectionHabits.forEach((h, i) => { h.order = i; });
   }
   Storage.setHabits(habits);
   renderHome();
@@ -384,8 +856,31 @@ function getDragAfterElement(container, y) {
 }
 """
 
+# ==================== js/components/development.js ====================
+FILES["js/components/development.js"] = r"""import { renderStudies } from './studies.js';
+import { renderTraining } from './training.js';
+
+export function renderDevelopment() {
+  const vp = document.getElementById('viewport');
+  vp.innerHTML = `
+    <div style="display:flex; gap:1rem; margin-top:2rem;">
+      <button class="btn-primary full-width" id="btn-studies">Estudios</button>
+      <button class="btn-primary full-width" id="btn-training">Entrenamientos</button>
+    </div>
+    <div id="dev-content"></div>
+  `;
+  document.getElementById('btn-studies').addEventListener('click', () => {
+    renderStudies(document.getElementById('dev-content'));
+  });
+  document.getElementById('btn-training').addEventListener('click', () => {
+    renderTraining(document.getElementById('dev-content'));
+  });
+  renderStudies(document.getElementById('dev-content'));
+}
+"""
+
 # ==================== js/components/studies.js (sin prompts) ====================
-files["js/components/studies.js"] = r"""import { Storage } from '../storage.js';
+FILES["js/components/studies.js"] = r"""import { Storage } from '../storage.js';
 import { todayStr, calculateBasal, spendCredit } from '../state.js';
 import { showModal, closeModal, showToast } from '../ui.js';
 
@@ -482,7 +977,6 @@ function loadTabContent(tabName, area) {
         };
         document.getElementById('cancel-doc').onclick = closeModal;
       });
-      // Remove doc buttons
       document.querySelectorAll('.remove-doc').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = parseInt(btn.dataset.index);
@@ -514,7 +1008,6 @@ function loadTabContent(tabName, area) {
         };
         document.getElementById('cancel-video').onclick = closeModal;
       });
-      // View video buttons
       document.querySelectorAll('.view-video').forEach(btn => {
         btn.addEventListener('click', () => {
           const url = btn.dataset.url;
@@ -589,7 +1082,7 @@ function finishSession(area, duration) {
 """
 
 # ==================== js/components/training.js (sin prompts) ====================
-files["js/components/training.js"] = r"""import { Storage } from '../storage.js';
+FILES["js/components/training.js"] = r"""import { Storage } from '../storage.js';
 import { todayStr, calculateBasal, spendCredit } from '../state.js';
 import { showModal, closeModal, showToast } from '../ui.js';
 
@@ -705,10 +1198,143 @@ function startRoutine(routine) {
 }
 """
 
-# Escribir archivos
-for path, content in files.items():
+# ==================== js/components/analysis.js ====================
+FILES["js/components/analysis.js"] = r"""import { Storage } from '../storage.js';
+import { calculateBasal } from '../state.js';
+let chart;
+export function renderAnalysis() {
+  const logs = Storage.getLogs();
+  const exploitLog = Storage.getExploitLog();
+  const studyAreas = Storage.getAreas().filter(a => a.type === 'study');
+  const trainingAreas = Storage.getAreas().filter(a => a.type === 'training');
+  const totalStudyHours = Math.round(exploitLog.filter(e => studyAreas.some(a => a.id === e.areaId)).reduce((s,e) => s + e.duration, 0) / 60);
+  const totalTrainingCount = exploitLog.filter(e => trainingAreas.some(a => a.id === e.areaId)).length;
+
+  document.getElementById('viewport').innerHTML = `
+    <div class="accumulator">
+      <div class="accumulator-card"><div class="accumulator-value">${totalStudyHours}h</div><div class="accumulator-label">Horas de estudio</div></div>
+      <div class="accumulator-card"><div class="accumulator-value">${totalTrainingCount}</div><div class="accumulator-label">Entrenamientos</div></div>
+    </div>
+    <div style="display:flex; gap:0.5rem; margin:0.8rem 0;">
+      <button class="btn-secondary period-btn active" data-months="3">3M</button>
+      <button class="btn-secondary period-btn" data-months="6">6M</button>
+      <button class="btn-secondary period-btn" data-months="12">12M</button>
+    </div>
+    <div class="chart-container"><canvas id="basal-chart"></canvas></div>
+    <div id="stats-text" class="card"></div>
+    <button class="btn-secondary full-width" id="export-btn">Exportar datos</button>
+  `;
+  document.querySelectorAll('.period-btn').forEach(b => b.addEventListener('click', function() {
+    document.querySelectorAll('.period-btn').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+    loadChart(parseInt(this.dataset.months));
+  }));
+  loadChart(3);
+  document.getElementById('export-btn').onclick = () => {
+    const blob = new Blob([Storage.exportAll()], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mentalo-backup.json'; a.click();
+  };
+}
+
+function loadChart(months) {
+  const logs = Storage.getLogs();
+  const dates = [], end = new Date(), start = new Date();
+  start.setMonth(start.getMonth()-months);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) dates.push(new Date(d).toISOString().split('T')[0]);
+  const scores = dates.map(d => calculateBasal(d).score);
+  const labels = dates.map(d => d.slice(5));
+  if (chart) chart.destroy();
+  // Suavizado media móvil 7 días
+  const smoothed = [];
+  for (let i = 0; i < scores.length; i++) {
+    let count = 0, sum = 0;
+    for (let j = Math.max(0, i-3); j <= Math.min(scores.length-1, i+3); j++) {
+      if (scores[j] !== null) { sum += scores[j]; count++; }
+    }
+    smoothed.push(count > 0 ? Math.round(sum/count) : null);
+  }
+  chart = new Chart(document.getElementById('basal-chart').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Estado Basal (suavizado)', data: smoothed, borderColor: '#5c8aff', tension: 0.4, pointRadius: 0 }] },
+    options: { scales: { y: { min:0, max:100 } } }
+  });
+  const valid = scores.filter(s => s !== null);
+  const avg = valid.length ? Math.round(valid.reduce((a,b)=>a+b,0)/valid.length) : '--';
+  document.getElementById('stats-text').innerHTML = `<strong>Promedio (${months}M):</strong> ${avg}/100`;
+}
+"""
+
+# ==================== js/components/emergency.js ====================
+FILES["js/components/emergency.js"] = r"""import { Storage } from '../storage.js';
+import { todayStr } from '../state.js';
+export function renderEmergency() {
+  const config = Storage.getConfig();
+  const checklist = config.emergencyChecklist;
+  const today = todayStr();
+  const log = Storage.getLogs()[today] || {};
+  const completed = log.checklist || [];
+  document.getElementById('viewport').innerHTML = `
+    <h3>Protocolo de Emergencia</h3>
+    <p style="color:var(--text-secondary);">Completá lo que puedas.</p>
+    <div id="checklist-container">${checklist.map((item, idx) => `
+      <div class="checklist-item ${completed.includes(idx)?'completed':''}" data-index="${idx}">
+        <input type="checkbox" id="ec-${idx}" ${completed.includes(idx)?'checked':''}>
+        <label for="ec-${idx}">${item}</label>
+      </div>`).join('')}</div>
+    <div class="card" style="margin-top:1rem; font-style:italic;">${config.supportMessage}</div>
+    <p id="progress-text" style="text-align:center; margin-top:1rem; font-weight:bold;"></p>
+  `;
+  document.querySelectorAll('.checklist-item input').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.closest('.checklist-item').dataset.index);
+      const logs = Storage.getLogs();
+      const log = logs[today] || {};
+      if (!log.checklist) log.checklist = [];
+      if (e.target.checked) { if (!log.checklist.includes(idx)) log.checklist.push(idx); e.target.closest('.checklist-item').classList.add('completed'); }
+      else { log.checklist = log.checklist.filter(i => i !== idx); e.target.closest('.checklist-item').classList.remove('completed'); }
+      Storage.addLog(today, log);
+      updateProgress();
+    });
+  });
+  updateProgress();
+  function updateProgress() {
+    const total = document.querySelectorAll('.checklist-item').length;
+    const checked = document.querySelectorAll('.checklist-item input:checked').length;
+    document.getElementById('progress-text').textContent = `${checked} de ${total} completado`;
+  }
+}
+"""
+
+# ==================== js/components/config.js ====================
+FILES["js/components/config.js"] = r"""import { Storage } from '../storage.js';
+import { showModal, closeModal, showToast } from '../ui.js';
+export function openConfigModal() {
+  const config = Storage.getConfig();
+  const body = `
+    <div class="form-group"><label>PIN</label><input type="password" id="cfg-pin" value="${config.pin}"></div>
+    <div class="form-group"><label>Mensaje de apoyo</label><textarea id="cfg-support">${config.supportMessage}</textarea></div>
+    <div class="form-group"><label>Checklist de emergencia (uno por línea)</label><textarea id="cfg-checklist" rows="5">${config.emergencyChecklist.join('\n')}</textarea></div>`;
+  const footer = '<button class="btn-primary" id="save-config-btn">Guardar</button><button class="btn-secondary" id="cancel-config-btn">Cancelar</button>';
+  showModal('Configuración', body, footer);
+  document.getElementById('save-config-btn').onclick = () => {
+    config.pin = document.getElementById('cfg-pin').value || '2207';
+    config.supportMessage = document.getElementById('cfg-support').value;
+    config.emergencyChecklist = document.getElementById('cfg-checklist').value.split('\n').filter(l => l.trim());
+    Storage.setConfig(config);
+    closeModal();
+    showToast('Configuración guardada');
+  };
+  document.getElementById('cancel-config-btn').onclick = closeModal;
+}
+"""
+
+# Crear carpetas y archivos
+for d in DIRS:
+    os.makedirs(d, exist_ok=True)
+
+for path, content in FILES.items():
     with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f"  ✓ {path}")
 
-print("\n✅ Interactividad mejorada: drag & drop intra-sección, sin prompts nativos.")
+print("\n✅ Proyecto MentalOS regenerado completamente.")
